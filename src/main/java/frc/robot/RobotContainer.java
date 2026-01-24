@@ -24,6 +24,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.Shooter;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -35,6 +36,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Shooter shooter;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -49,6 +51,8 @@ public class RobotContainer {
         // Real robot, instantiate hardware IO implementations
         // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
         // a CANcoder
+        drive = null;
+/*
         drive =
             new Drive(
                 new GyroIOPigeon2(),
@@ -56,7 +60,7 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
-
+*/
         // The ModuleIOTalonFXS implementation provides an example implementation for
         // TalonFXS controller connected to a CANdi with a PWM encoder. The
         // implementations
@@ -74,6 +78,8 @@ public class RobotContainer {
         // new ModuleIOTalonFXS(TunerConstants.FrontRight),
         // new ModuleIOTalonFXS(TunerConstants.BackLeft),
         // new ModuleIOTalonFXS(TunerConstants.BackRight));
+
+        shooter = new Shooter();
         break;
 
       case SIM:
@@ -85,6 +91,7 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.FrontRight),
                 new ModuleIOSim(TunerConstants.BackLeft),
                 new ModuleIOSim(TunerConstants.BackRight));
+        shooter = new Shooter();
         break;
 
       default:
@@ -96,10 +103,13 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        shooter = new Shooter();
         break;
     }
 
     // Set up auto routines
+    autoChooser = null;
+/* !*!*!* TODO: fixme
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     // Set up SysId routines
@@ -117,7 +127,7 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
+*/
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -129,6 +139,7 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
+/* !*!*!* TODO: fixme
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
@@ -160,6 +171,11 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+*/
+    controller
+        .a()
+        .onTrue( shooter.dashboardSpinUpCommand() )
+        .onFalse( shooter.spinUpCommand(0) );
   }
 
   /**
