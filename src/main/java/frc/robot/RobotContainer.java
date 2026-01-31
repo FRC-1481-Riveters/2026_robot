@@ -51,8 +51,6 @@ public class RobotContainer {
         // Real robot, instantiate hardware IO implementations
         // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
         // a CANcoder
-        drive = null;
-/*
         drive =
             new Drive(
                 new GyroIOPigeon2(),
@@ -60,7 +58,7 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
-*/
+
         // The ModuleIOTalonFXS implementation provides an example implementation for
         // TalonFXS controller connected to a CANdi with a PWM encoder. The
         // implementations
@@ -108,8 +106,6 @@ public class RobotContainer {
     }
 
     // Set up auto routines
-    autoChooser = null;
-/* !*!*!* TODO: fixme
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     // Set up SysId routines
@@ -127,7 +123,7 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-*/
+
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -139,7 +135,6 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-/* !*!*!* TODO: fixme
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
@@ -171,7 +166,7 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
-*/
+
     controller
         .a()
         .onTrue( shooter.dashboardSpinUpCommand() )
