@@ -8,20 +8,32 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.net.PortForwarder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
+import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
+    private final SendableChooser<Command> autoChooser;
+
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+
+    private final Telemetry logger = new Telemetry(MaxSpeed);
+    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+    private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -30,14 +42,39 @@ public class RobotContainer {
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
-    private final Telemetry logger = new Telemetry(MaxSpeed);
-
     private final CommandXboxController joystick = new CommandXboxController(0);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     public RobotContainer() {
         configureBindings();
+        for (int port = 5801; port <= 5809; port++) {
+//            PortForwarder.add(port, "limelight-back.local", port);
+            PortForwarder.add(port, "10.14.81.11", port);
+        }
+
+        // add limelight 3a LEFT
+        PortForwarder.add(5811, "10.14.81.12", 5801);
+        PortForwarder.add(5812, "10.14.81.12", 5802);
+        PortForwarder.add(5813, "10.14.81.12", 5803);
+        PortForwarder.add(5814, "10.14.81.12", 5804);
+        PortForwarder.add(5815, "10.14.81.12", 5805);
+        PortForwarder.add(5816, "10.14.81.12", 5806);
+        PortForwarder.add(5817, "10.14.81.12", 5807);
+        PortForwarder.add(5818, "10.14.81.12", 5808);
+        PortForwarder.add(5819, "10.14.81.12", 5809);
+        // RIGHT
+        PortForwarder.add(5811, "10.14.81.13", 5801);
+        PortForwarder.add(5812, "10.14.81.13", 5802);
+        PortForwarder.add(5813, "10.14.81.13", 5803);
+        PortForwarder.add(5814, "10.14.81.13", 5804);
+        PortForwarder.add(5815, "10.14.81.13", 5805);
+        PortForwarder.add(5816, "10.14.81.13", 5806);
+        PortForwarder.add(5817, "10.14.81.13", 5807);
+        PortForwarder.add(5818, "10.14.81.13", 5808);
+        PortForwarder.add(5819, "10.14.81.13", 5809);
+
+        autoChooser = AutoBuilder.buildAutoChooser("Nothing");
+        SmartDashboard.putData("Auto Mode", autoChooser);
     }
 
     private void configureBindings() {
@@ -80,19 +117,21 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         // Simple drive forward auton
         final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-            // Reset our field centric heading to match the robot
-            // facing away from our alliance station wall (0 deg).
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            // Then slowly drive forward (away from us) for 5 seconds.
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(0.5)
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
-            )
-            .withTimeout(5.0),
-            // Finally idle for the rest of auton
-            drivetrain.applyRequest(() -> idle)
-        );
+        Command command;
+        command = autoChooser.getSelected();
+        String name = command.getName();
+        if( name.startsWith("right ") )
+        {
+            // if the path starts with "right ", mirror it from a left path
+            // i.e., name the left path "2 coral us", and make a dummy right path "right 2 coral us"
+            // - this will skip the dummy path and mirror the left path instead
+            System.out.println("Flipping auton path " + name.substring(6));
+            command = new PathPlannerAuto( name.substring(6), true );
+        }
+        else
+        {
+            System.out.println("Using auton path " + name);
+        }
+        return command;
     }
 }

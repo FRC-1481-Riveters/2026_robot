@@ -10,8 +10,13 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
@@ -37,6 +42,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
+    private boolean fusionEnabled = true;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -44,6 +50,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+
+    /** Swerve request to apply during robot-centric path following */
+    private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -130,6 +139,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        configureAutoBuilder();
     }
 
     /**
@@ -186,7 +196,38 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        configureAutoBuilder();
     }
+
+    private void configureAutoBuilder() {
+        try {
+            var config = RobotConfig.fromGUISettings();
+            AutoBuilder.configure(
+                () -> getState().Pose,   // Supplier of current robot pose
+                this::resetPose,         // Consumer for seeding pose against auto
+                () -> getState().Speeds, // Supplier of current robot speeds
+                // Consumer of ChassisSpeeds and feedforwards to drive the robot
+                (speeds, feedforwards) -> setControl(
+                    m_pathApplyRobotSpeeds.withSpeeds(speeds)
+                        .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                        .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+                ),
+                new PPHolonomicDriveController(
+                // PID constants for translation
+                new PIDConstants(3.0, 0.000006, 0, 0.3),
+                // PID constants for rotation
+                new PIDConstants(3.5, 0.000003, 0, 0.3)
+                ),
+                config,
+                // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                this // Subsystem for requirements
+            );
+        } catch (Exception ex) {
+            DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.getStackTrace());
+        }
+    }
+
 
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
@@ -299,5 +340,72 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
+    }
+    public void updateOdometry(Pose2d pose, boolean valid, double timestamp, int tagCount, double tagDistance)
+    {
+        double xyStds, radStds;
+
+        // WPILib SwerveDrivePoseEstimator:
+        // Standard deviations of the vision pose measurement 
+        // (x position in meters, y position in meters, and heading in radians).
+        // Increase these numbers to trust the vision pose measurement less.
+        //
+        // - The default standard deviations of the model states are 
+        //   0.1 meters for x, 0.1 meters for y, and 0.1 radians for heading.
+        //
+        // When incorporating AprilTag poses, 
+        //   make the vision heading standard deviation very large,
+        //   make the gyro heading standard deviation small, and 
+        //   scale the vision x and y standard deviation by distance from the tag.
+
+        xyStds  = 5.000;     // default: Limelight pose is not particularly trustworthy
+        radStds = 1.333;
+
+        if( valid && fusionEnabled )
+        {
+            boolean bTooFar;
+            bTooFar = false;
+
+            // multiple targets detected - trust is medium
+            if (tagCount > 1) 
+            {
+                xyStds  = 0.300;
+                radStds = 0.100;
+            }
+            // target over 4m away - trust is low
+            else if (tagDistance > 4) {
+                xyStds  = 1.000;
+                radStds = 0.333;
+                bTooFar = false;
+            }
+            // target over 2m away - trust is medium
+            else if (tagDistance > 2) {
+                xyStds  = 0.500;
+                radStds = 0.160;
+                bTooFar = false;
+            }
+            // target close - trust is high
+            else if (tagDistance < 2) {
+                xyStds  = 0.300;
+                radStds = 0.100;
+            }
+
+            if( pose.getX() != 0 && pose.getY() != 0 && (bTooFar == false) )
+            {
+                this.setVisionMeasurementStdDevs(VecBuilder.fill(xyStds, xyStds, radStds));
+                this.addVisionMeasurement(pose, timestamp);
+            }
+        }
+
+
+    }
+
+    public void fusionDisable()
+    {
+//        fusionEnabled = false;
+    }
+    public void fusionEnable()
+    {
+        fusionEnabled = true;
     }
 }

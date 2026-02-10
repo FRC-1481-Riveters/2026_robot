@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import org.littletonrobotics.junction.Logger;
 
 public class Telemetry {
     private final double MaxSpeed;
@@ -30,7 +31,8 @@ public class Telemetry {
      */
     public Telemetry(double maxSpeed) {
         MaxSpeed = maxSpeed;
-        SignalLogger.start();
+        SignalLogger.setPath("/media/sda1/logs/");
+        //SignalLogger.start();
 
         /* Set up the module state Mechanism2d telemetry */
         for (int i = 0; i < 4; ++i) {
@@ -96,12 +98,12 @@ public class Telemetry {
         driveOdometryFrequency.set(1.0 / state.OdometryPeriod);
 
         /* Also write to log file */
-        SignalLogger.writeStruct("DriveState/Pose", Pose2d.struct, state.Pose);
-        SignalLogger.writeStruct("DriveState/Speeds", ChassisSpeeds.struct, state.Speeds);
-        SignalLogger.writeStructArray("DriveState/ModuleStates", SwerveModuleState.struct, state.ModuleStates);
-        SignalLogger.writeStructArray("DriveState/ModuleTargets", SwerveModuleState.struct, state.ModuleTargets);
-        SignalLogger.writeStructArray("DriveState/ModulePositions", SwerveModulePosition.struct, state.ModulePositions);
-        SignalLogger.writeDouble("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
+        Logger.recordOutput("DriveState/Pose", Pose2d.struct, state.Pose);
+        Logger.recordOutput("DriveState/Speeds", ChassisSpeeds.struct, state.Speeds);
+        Logger.recordOutput("DriveState/ModuleStates", SwerveModuleState.struct, state.ModuleStates);
+        Logger.recordOutput("DriveState/ModuleTargets", SwerveModuleState.struct, state.ModuleTargets);
+        Logger.recordOutput("DriveState/ModulePositions", SwerveModulePosition.struct, state.ModulePositions);
+        Logger.recordOutput("DriveState/OdometryPeriod", state.OdometryPeriod, "seconds");
 
         /* Telemeterize the pose to a Field2d */
         fieldTypePub.set("Field2d");

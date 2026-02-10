@@ -28,4 +28,14 @@ public final class Constants {
     /** Replaying from a log file. */
     REPLAY
   }
+
+  public static final class VisionConstants
+  {
+    public static final String LIMELIGHT_NAME = "limelight-riveter";
+
+    public static final double waitTime = 1;
+    public static final double validationTime = 0.3;
+
+    public static final double TOLERANCE = 0.01;
+  }
 }
