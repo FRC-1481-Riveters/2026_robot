@@ -5,6 +5,8 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.LimelightHelpers.*;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
 
@@ -21,6 +23,8 @@ public class VisionSubsystem extends SubsystemBase {
     LimelightHelpers.SetRobotOrientation("limelight-back", 0, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-left", 0, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-right", 0, 0, 0, 0, 0, 0);
+    //TODO: only do this hack when we're in E3
+    m_commandSwerveDrivetrain.resetPose( new Pose2d(14.12, 3.88, new Rotation2d( 0 ) ) );
   }
 
   public static class NoSuchTargetException extends RuntimeException {
@@ -41,8 +45,8 @@ public class VisionSubsystem extends SubsystemBase {
         4,
         180
         );
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {3,6,7,8,9,10,11,13,16,17,18,19,20,21,22});
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-two", new int[] {3,6,7,8,9,10,11,13,16,17,18,19,20,21,22});
+        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-two",  new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
     }
 
   @Override

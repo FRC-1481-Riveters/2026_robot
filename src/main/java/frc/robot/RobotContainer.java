@@ -44,6 +44,7 @@ public class RobotContainer {
 
     private final CommandXboxController joystick = new CommandXboxController(0);
 
+    private boolean autoAimPressed = false;
 
     public RobotContainer() {
         configureBindings();
@@ -77,18 +78,89 @@ public class RobotContainer {
         SmartDashboard.putData("Auto Mode", autoChooser);
     }
 
+    private double deadBandLeftX() {
+        double newValue = joystick.getLeftX();
+        if ((newValue <= 0.05) && (newValue >= -0.05))
+        {
+            if( autoAimPressed )
+            {
+                return 0.0; // TODO: turn based on the Limelight angle!
+            }
+            else
+            {
+                return 0.0;
+            }
+        }
+        else if (newValue < 0) 
+        {
+            return (-1*(newValue*newValue));
+        }
+        else
+        {
+            return newValue*newValue;
+        }
+
+    }
+
+    private double deadBandRightX() {
+        double newValue = joystick.getRightX();
+        if ((newValue <= 0.05) && (newValue >= -0.05))
+        {
+            return 0.0;
+        }
+        else if (newValue < 0) 
+        {
+            return (-1*(newValue*newValue));
+        }
+        else
+        {
+            return newValue*newValue;
+        }
+
+    }
+
+    private double deadBandLeftY() {
+        double newValue = joystick.getLeftY();
+        if ((newValue <= 0.05) && (newValue >= -0.05))
+        {
+            return 0.0;
+        }
+        else if (newValue < 0) 
+        {
+            return (-1*(newValue*newValue));
+        }
+        else
+        {
+            return newValue*newValue;
+        }
+
+    }
+    
+
+    private void AutoAimSet( boolean newval )
+    {
+        autoAimPressed = newval;
+    }
+
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
+            
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                drive.withVelocityX(-deadBandLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityY(-deadBandLeftX() * MaxSpeed) // Drive left with negative X (left)
+                    .withRotationalRate(-deadBandRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
+                    
+ // Drive counterclockwise with negative X (left)
         );
 
+        joystick.leftBumper()
+            .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
+            .onFalse( Commands.runOnce( ()->AutoAimSet(false) ) ) ;
+            
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
@@ -109,7 +181,7 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // Reset the field-centric heading on left bumper press.
-        joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        joystick.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
