@@ -7,6 +7,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
 
+import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -18,6 +19,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -28,43 +30,47 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
+
 
 public class Intake extends SubsystemBase {
     private static final AngularVelocity kVelocityTolerance = RPM.of(100);
 
     private final TalonFXS upDownMotor, rollerMotor;
+    private TalonFXS upDownPWM, rollerPWM;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
+    private RobotContainer rc;
 
     private double dashboardTargetRPM = 500.0;
 
-    public Intake() {
+    public Intake( RobotContainer robotContainer ) {
+        rc = robotContainer;
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
         rollerMotor = new TalonFXS(Constants.CAN_motor_intake_roller);
 
-        configureMotor(upDownMotor, InvertedValue.Clockwise_Positive);
-        configureMotor(rollerMotor, InvertedValue.CounterClockwise_Positive);
-//        rightShooterMotor.setControl( new Follower(leftShooterMotor.getDeviceID(), MotorAlignmentValue.Opposed) );
+        configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 40);
+        configureMotor(rollerMotor, InvertedValue.Clockwise_Positive, 60, 40);
 
         SmartDashboard.putData(this);
     }
 
-    private void configureMotor(TalonFXS motor, InvertedValue invertDirection) {
+    private void configureMotor(TalonFXS motor, InvertedValue invertDirection, double statorCurrentLimit, double supplyCurrentLimit ) {
         final TalonFXSConfiguration config = new TalonFXSConfiguration()
+            .withCommutation(
+                new CommutationConfigs()
+                    .withMotorArrangement(MotorArrangementValue.VORTEX_JST)
+            )   
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(invertDirection)
                     .withNeutralMode(NeutralModeValue.Brake)
             )
-            .withVoltage(
-                new VoltageConfigs()
-                    .withPeakReverseVoltage(Volts.of(0))
-            )
             .withCurrentLimits(
                 new CurrentLimitsConfigs()
-                    .withStatorCurrentLimit(Amps.of(20))
+                    .withStatorCurrentLimit(Amps.of(statorCurrentLimit))
                     .withStatorCurrentLimitEnable(true)
-                    .withSupplyCurrentLimit(Amps.of(10))
+                    .withSupplyCurrentLimit(Amps.of(supplyCurrentLimit))
                     .withSupplyCurrentLimitEnable(true)
             )
             .withSlot0(
@@ -92,6 +98,7 @@ public class Intake extends SubsystemBase {
             voltageRequest
                 .withOutput(Volts.of(percentOutput * 12.0))
         );
+        System.out.println("setUpDownPercentOutput: " + percentOutput);
     }
 
     
@@ -100,6 +107,15 @@ public class Intake extends SubsystemBase {
             voltageRequest
                 .withOutput(Volts.of(percentOutput * 12.0))
         );
+    }
+
+    @Override
+    public void periodic() {
+        double percentOutput;
+        percentOutput = rc.getOperatorRoller();
+        setRollerPercentOutput( percentOutput );
+        // TODO Auto-generated method stub
+        super.periodic();
     }
 
     

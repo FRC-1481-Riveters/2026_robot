@@ -35,7 +35,7 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(MaxSpeed);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
-    private final Intake m_Intake = new Intake();
+    private final Intake m_Intake = new Intake( this );
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -45,7 +45,7 @@ public class RobotContainer {
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final CommandXboxController joystick = new CommandXboxController(0);
-    private final CommandXboxController operatorJoystick = new CommandXboxController(0);
+    private final CommandXboxController operatorJoystick = new CommandXboxController(1);
 
     private boolean autoAimPressed = false;
 
@@ -191,16 +191,18 @@ public class RobotContainer {
         // =========== OPERATOR JOYSTICK =============
 
         operatorJoystick.povUp()
-            .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0.1) ) )
+            .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
 
         operatorJoystick.povDown()
-            .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.1) ) )
+            .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
 
-        m_Intake.setRollerPercentOutput( operatorJoystick.getLeftTriggerAxis() );
+    }
 
-
+    public double getOperatorRoller()
+    {
+        return  operatorJoystick.getLeftTriggerAxis();
     }
 
     public Command getAutonomousCommand() {
