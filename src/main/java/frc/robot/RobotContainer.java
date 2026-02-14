@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
 
 public class RobotContainer {
     private final SendableChooser<Command> autoChooser;
@@ -34,6 +35,7 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(MaxSpeed);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
+    private final Intake m_Intake = new Intake();
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -43,6 +45,7 @@ public class RobotContainer {
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final CommandXboxController joystick = new CommandXboxController(0);
+    private final CommandXboxController operatorJoystick = new CommandXboxController(0);
 
     private boolean autoAimPressed = false;
 
@@ -76,6 +79,8 @@ public class RobotContainer {
 
         autoChooser = AutoBuilder.buildAutoChooser("Nothing");
         SmartDashboard.putData("Auto Mode", autoChooser);
+
+        drivetrain.registerTelemetry(logger::telemeterize);
     }
 
     private double deadBandLeftX() {
@@ -152,9 +157,7 @@ public class RobotContainer {
                 drive.withVelocityX(-deadBandLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
                     .withVelocityY(-deadBandLeftX() * MaxSpeed) // Drive left with negative X (left)
                     .withRotationalRate(-deadBandRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-            )
-                    
- // Drive counterclockwise with negative X (left)
+            )                    
         );
 
         joystick.leftBumper()
@@ -183,7 +186,21 @@ public class RobotContainer {
         // Reset the field-centric heading on left bumper press.
         joystick.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
-        drivetrain.registerTelemetry(logger::telemeterize);
+        // =========== OPERATOR JOYSTICK =============
+        // =========== OPERATOR JOYSTICK =============
+        // =========== OPERATOR JOYSTICK =============
+
+        operatorJoystick.povUp()
+            .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0.1) ) )
+            .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
+
+        operatorJoystick.povDown()
+            .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.1) ) )
+            .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
+
+        m_Intake.setRollerPercentOutput( operatorJoystick.getLeftTriggerAxis() );
+
+
     }
 
     public Command getAutonomousCommand() {
