@@ -10,12 +10,12 @@ import java.util.List;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.configs.VoltageConfigs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -32,15 +32,15 @@ import frc.robot.Constants;
 public class Intake extends SubsystemBase {
     private static final AngularVelocity kVelocityTolerance = RPM.of(100);
 
-    private final TalonFX upDownMotor, rollerMotor;
+    private final TalonFXS upDownMotor, rollerMotor;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
 
     private double dashboardTargetRPM = 500.0;
 
     public Intake() {
-        upDownMotor = new TalonFX(Constants.CAN_motor_intake_updown);
-        rollerMotor = new TalonFX(Constants.CAN_motor_intake_roller);
+        upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
+        rollerMotor = new TalonFXS(Constants.CAN_motor_intake_roller);
 
         configureMotor(upDownMotor, InvertedValue.Clockwise_Positive);
         configureMotor(rollerMotor, InvertedValue.CounterClockwise_Positive);
@@ -49,8 +49,8 @@ public class Intake extends SubsystemBase {
         SmartDashboard.putData(this);
     }
 
-    private void configureMotor(TalonFX motor, InvertedValue invertDirection) {
-        final TalonFXConfiguration config = new TalonFXConfiguration()
+    private void configureMotor(TalonFXS motor, InvertedValue invertDirection) {
+        final TalonFXSConfiguration config = new TalonFXSConfiguration()
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(invertDirection)
@@ -103,7 +103,7 @@ public class Intake extends SubsystemBase {
     }
 
     
-    private void initSendable(SendableBuilder builder, TalonFX motor, String name) {
+    private void initSendable(SendableBuilder builder, TalonFXS motor, String name) {
         builder.addDoubleProperty(name + " RPM", () -> motor.getVelocity().getValue().in(RPM), null);
         builder.addDoubleProperty(name + " Stator Current", () -> motor.getStatorCurrent().getValue().in(Amps), null);
         builder.addDoubleProperty(name + " Supply Current", () -> motor.getSupplyCurrent().getValue().in(Amps), null);
