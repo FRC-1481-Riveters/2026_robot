@@ -359,35 +359,32 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //   scale the vision x and y standard deviation by distance from the tag.
 
         xyStds  = 5.000;     // default: Limelight pose is not particularly trustworthy
-        radStds = 1.333;
+        radStds = 999999;    // don't trust Limelight rotation
 
         if( valid && fusionEnabled )
         {
             boolean bTooFar;
             bTooFar = false;
 
-            // multiple targets detected - trust is medium
-            if (tagCount > 1) 
+            // one or >= 3 targets detected - trust is low
+            if (tagCount != 2) 
             {
-                xyStds  = 0.300;
-                radStds = 0.100;
+                xyStds  = 100.0;
+                bTooFar = true;
             }
             // target over 4m away - trust is low
             else if (tagDistance > 4) {
                 xyStds  = 1.000;
-                radStds = 0.333;
                 bTooFar = false;
             }
             // target over 2m away - trust is medium
             else if (tagDistance > 2) {
                 xyStds  = 0.500;
-                radStds = 0.160;
                 bTooFar = false;
             }
             // target close - trust is high
             else if (tagDistance < 2) {
                 xyStds  = 0.300;
-                radStds = 0.100;
             }
 
             if( pose.getX() != 0 && pose.getY() != 0 && (bTooFar == false) )

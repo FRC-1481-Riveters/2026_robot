@@ -52,30 +52,13 @@ public class RobotContainer {
     public RobotContainer() {
         configureBindings();
         for (int port = 5801; port <= 5809; port++) {
-//            PortForwarder.add(port, "limelight-back.local", port);
+            PortForwarder.add(port, "limelight-back.local", port);
             PortForwarder.add(port, "10.14.81.11", port);
+            PortForwarder.add(port, "limelight-left.local", port);
+            PortForwarder.add(port, "10.14.81.12", port);
+            PortForwarder.add(port, "limelight-right.local", port);
+            PortForwarder.add(port, "10.14.81.13", port);
         }
-
-        // add limelight 3a LEFT
-        PortForwarder.add(5811, "10.14.81.12", 5801);
-        PortForwarder.add(5812, "10.14.81.12", 5802);
-        PortForwarder.add(5813, "10.14.81.12", 5803);
-        PortForwarder.add(5814, "10.14.81.12", 5804);
-        PortForwarder.add(5815, "10.14.81.12", 5805);
-        PortForwarder.add(5816, "10.14.81.12", 5806);
-        PortForwarder.add(5817, "10.14.81.12", 5807);
-        PortForwarder.add(5818, "10.14.81.12", 5808);
-        PortForwarder.add(5819, "10.14.81.12", 5809);
-        // RIGHT
-        PortForwarder.add(5811, "10.14.81.13", 5801);
-        PortForwarder.add(5812, "10.14.81.13", 5802);
-        PortForwarder.add(5813, "10.14.81.13", 5803);
-        PortForwarder.add(5814, "10.14.81.13", 5804);
-        PortForwarder.add(5815, "10.14.81.13", 5805);
-        PortForwarder.add(5816, "10.14.81.13", 5806);
-        PortForwarder.add(5817, "10.14.81.13", 5807);
-        PortForwarder.add(5818, "10.14.81.13", 5808);
-        PortForwarder.add(5819, "10.14.81.13", 5809);
 
         autoChooser = AutoBuilder.buildAutoChooser("Nothing");
         SmartDashboard.putData("Auto Mode", autoChooser);
@@ -171,7 +154,6 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         ));
@@ -183,8 +165,13 @@ public class RobotContainer {
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        // Reset the field-centric heading on left bumper press.
-        joystick.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        // Reset the field-centric heading on START button (below/left of controller power)
+        //joystick.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        joystick.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+
+        // Make an X out of the swerve wheels
+        joystick.x()
+            .whileTrue(drivetrain.applyRequest(() -> brake));
 
         // =========== OPERATOR JOYSTICK =============
         // =========== OPERATOR JOYSTICK =============
@@ -193,7 +180,7 @@ public class RobotContainer {
         operatorJoystick.povUp()
             .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
-
+        
         operatorJoystick.povDown()
             .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );

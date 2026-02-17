@@ -77,22 +77,25 @@ public class VisionSubsystem extends SubsystemBase {
       LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-back");
       if( mt2 != null )
       {
-        if(mt2.tagCount == 0)
+        if(mt2.tagCount != 2)
         {
           bValid = false;
         }
         m_commandSwerveDrivetrain.updateOdometry(mt2.pose, bValid, mt2.timestampSeconds,mt2.tagCount, mt2.avgTagDist);
       }
 
-      bValid = true;
-      LimelightHelpers.PoseEstimate mtCam2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-two");
-      if( mtCam2 != null )
+      if( bValid == false )
       {
-        if(mtCam2.tagCount == 0)
+        bValid = true;
+        LimelightHelpers.PoseEstimate mtCam2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
+        if( mtCam2 != null )
         {
-          bValid = false;
+          if(mtCam2.tagCount != 2)
+          {
+            bValid = false;
+          }
+          m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
         }
-        m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
       }
   }
 

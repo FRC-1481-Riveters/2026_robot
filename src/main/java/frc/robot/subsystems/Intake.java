@@ -50,7 +50,7 @@ public class Intake extends SubsystemBase {
         rollerMotor = new TalonFXS(Constants.CAN_motor_intake_roller);
 
         configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 40);
-        configureMotor(rollerMotor, InvertedValue.Clockwise_Positive, 60, 40);
+        configureMotor(rollerMotor, InvertedValue.Clockwise_Positive, 120, 90);
 
         SmartDashboard.putData(this);
     }
@@ -75,10 +75,10 @@ public class Intake extends SubsystemBase {
             )
             .withSlot0(
                 new Slot0Configs()
-                    .withKP(0.5)
-                    .withKI(2)
+                    .withKP(2)
+                    .withKI(0)
                     .withKD(0)
-                    .withKV(12.0 / RPM.of(6000).in(RotationsPerSecond)) // 12 volts when requesting max RPS
+                    .withKV(12.0 / RPM.of(3600).in(RotationsPerSecond)) // 12 volts when requesting max RPS
             );
         
         motor.getConfigurator().apply(config);
@@ -98,15 +98,28 @@ public class Intake extends SubsystemBase {
             voltageRequest
                 .withOutput(Volts.of(percentOutput * 12.0))
         );
-        System.out.println("setUpDownPercentOutput: " + percentOutput);
     }
 
     
     public void setRollerPercentOutput(double percentOutput) {
-        rollerMotor.setControl(
-            voltageRequest
-                .withOutput(Volts.of(percentOutput * 12.0))
-        );
+        if( percentOutput < 0.1 )
+            rollerMotor.setControl(
+                voltageRequest
+                    .withOutput(Volts.of(0))
+            );
+        else
+            rollerMotor.setControl(
+                voltageRequest
+                    .withOutput(Volts.of(5))
+            );
+
+            /*
+        else
+            rollerMotor.setControl(
+                velocityRequest
+                    .withVelocity(RPM.of(60 * percentOutput))
+            );
+            */
     }
 
     @Override
@@ -128,8 +141,8 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void initSendable(SendableBuilder builder) {
-        // initSendable(builder, leftShooterMotor, "Left");
-        // initSendable(builder, rightShooterMotor, "Right");
+        initSendable(builder, rollerMotor, "Roller");
+        initSendable(builder, upDownMotor, "IntakeUpDown");
         builder.addStringProperty("Command", () -> getCurrentCommand() != null ? getCurrentCommand().getName() : "null", null);
         builder.addDoubleProperty("Dashboard RPM", () -> dashboardTargetRPM, value -> dashboardTargetRPM = value);
         builder.addDoubleProperty("Target RPM", () -> velocityRequest.getVelocityMeasure().in(RPM), null);
