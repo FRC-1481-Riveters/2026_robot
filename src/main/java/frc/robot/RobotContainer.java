@@ -25,6 +25,8 @@ import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Shooter;
+
 
 public class RobotContainer {
     private final SendableChooser<Command> autoChooser;
@@ -36,6 +38,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
     private final Intake m_Intake = new Intake( this );
+    private final Shooter m_Shooter = new Shooter();
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -154,9 +157,19 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
+        joystick.a()
+            .onTrue( 
+                Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) )
+                .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(3000)) )
+            )
+            .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )
+        );
+
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         ));
+       
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
@@ -184,8 +197,14 @@ public class RobotContainer {
         operatorJoystick.povDown()
             .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
+       
+        operatorJoystick.a()
+            .onTrue(Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ))
+            .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ));
 
     }
+
+
 
     public double getOperatorRoller()
     {

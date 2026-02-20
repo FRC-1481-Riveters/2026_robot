@@ -19,6 +19,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import frc.robot.Constants;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.util.sendable.SendableBuilder;
@@ -31,6 +32,7 @@ public class Shooter extends SubsystemBase {
     private static final AngularVelocity kVelocityTolerance = RPM.of(100);
 
     private final TalonFX leftShooterMotor, rightShooterMotor;
+    private final TalonFX kickerMotor;
     private final List<TalonFX> motors;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
@@ -38,12 +40,15 @@ public class Shooter extends SubsystemBase {
     private double dashboardTargetRPM = 500.0;
 
     public Shooter() {
-        leftShooterMotor = new TalonFX(30);
-        rightShooterMotor = new TalonFX(31);
+        leftShooterMotor = new TalonFX(Constants.CAN_motor_shooter_left);
+        rightShooterMotor = new TalonFX(Constants.CAN_motor_shooter_right);
         motors = List.of(leftShooterMotor, rightShooterMotor);
+        kickerMotor = new TalonFX(Constants.CAN_motor_kicker);
+        
 
         configureMotor(leftShooterMotor, InvertedValue.Clockwise_Positive);
         configureMotor(rightShooterMotor, InvertedValue.CounterClockwise_Positive);
+        configureMotor(kickerMotor, InvertedValue.CounterClockwise_Positive);
 //        rightShooterMotor.setControl( new Follower(leftShooterMotor.getDeviceID(), MotorAlignmentValue.Opposed) );
 
         SmartDashboard.putData(this);
@@ -78,13 +83,20 @@ public class Shooter extends SubsystemBase {
         motor.getConfigurator().apply(config);
     }
 
-    public void setRPM(double rpm) {
+    public void setShooterRPM(double rpm) {
         for (final TalonFX motor : motors) {
             motor.setControl(
                 velocityRequest
                     .withVelocity(RPM.of(rpm))
             );
         }
+    }
+     public void setKickerRPM(double rpm) {
+       
+            kickerMotor.setControl(
+                velocityRequest
+                    .withVelocity(RPM.of(rpm)));
+        
     }
 
     public void setPercentOutput(double percentOutput) {
@@ -100,14 +112,6 @@ public class Shooter extends SubsystemBase {
         setPercentOutput(0.0);
     }
 
-    public Command spinUpCommand(double rpm) {
-        return runOnce(() -> setRPM(rpm))
-            .andThen(Commands.waitUntil(this::isVelocityWithinTolerance));
-    }
-
-    public Command dashboardSpinUpCommand() {
-        return defer(() -> spinUpCommand(dashboardTargetRPM)); 
-    }
 
     public boolean isVelocityWithinTolerance() {
         return motors.stream().allMatch(motor -> {

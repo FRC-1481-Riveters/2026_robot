@@ -19,6 +19,9 @@ public final class Constants {
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
   public static final int CAN_motor_intake_roller = 30;
   public static final int CAN_motor_intake_updown = 31;
+  public static final int CAN_motor_shooter_left = 35;
+  public static final int CAN_motor_shooter_right = 36;
+  public static final int CAN_motor_kicker = 37;
 
   public static enum Mode {
     /** Running on a real robot. */
@@ -39,6 +42,11 @@ public final class Constants {
     public static final double validationTime = 0.3;
 
     public static final double TOLERANCE = 0.01;
+  }
+  public static final class Shooter
+  {
+
+    public static final double shootSpeed = 3000.0;
   }
 
 }
