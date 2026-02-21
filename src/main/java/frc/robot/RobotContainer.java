@@ -158,12 +158,32 @@ public class RobotContainer {
         );
 
         joystick.a()
-            .onTrue( 
-                Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) )
+            .whileTrue( 
+                Commands.runOnce( ()->m_Shooter.setShooterRPM(1800) ) //Constants.Shooter.shootSpeed
                 .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
-                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(3000)) )
+                .andThen(Commands.waitSeconds(0.5))
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(2000)) )
+                .andThen( 
+                    Commands.repeatingSequence
+                    (
+                        Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.40))
+                        .andThen( Commands.waitSeconds(1.0) )
+                        .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.0)) )
+                        .andThen( Commands.waitSeconds(0.2) )
+                        .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(-0.15)) )
+                        .andThen( Commands.waitSeconds(0.2) )
+                        .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.0)) )
+                        .andThen( Commands.waitSeconds(0.2) )
+                    ) 
+                )
             )
-            .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )
+            .onFalse(
+                Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
+                .andThen(Commands.waitSeconds(0.25))
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
+                .andThen(Commands.waitSeconds(0.25))
+                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )
+            )
         );
 
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
@@ -201,7 +221,13 @@ public class RobotContainer {
         operatorJoystick.a()
             .onTrue(Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ))
             .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ));
-
+        
+        operatorJoystick.axisGreaterThan(2, 0.1)
+            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0.2) ) )
+            .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
+        operatorJoystick.axisLessThan(2, -0.1)
+            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(-0.2) ) )
+            .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
     }
 
 

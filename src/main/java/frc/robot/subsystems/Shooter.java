@@ -33,6 +33,7 @@ public class Shooter extends SubsystemBase {
 
     private final TalonFX leftShooterMotor, rightShooterMotor;
     private final TalonFX kickerMotor;
+    private final TalonFX angleMotor;
     private final List<TalonFX> motors;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
@@ -43,23 +44,33 @@ public class Shooter extends SubsystemBase {
         leftShooterMotor = new TalonFX(Constants.CAN_motor_shooter_left);
         rightShooterMotor = new TalonFX(Constants.CAN_motor_shooter_right);
         motors = List.of(leftShooterMotor, rightShooterMotor);
+
         kickerMotor = new TalonFX(Constants.CAN_motor_kicker);
+        angleMotor = new TalonFX(Constants.CAN_motor_angle);
         
 
-        configureMotor(leftShooterMotor, InvertedValue.Clockwise_Positive);
-        configureMotor(rightShooterMotor, InvertedValue.CounterClockwise_Positive);
-        configureMotor(kickerMotor, InvertedValue.CounterClockwise_Positive);
+        configureMotor(leftShooterMotor, InvertedValue.Clockwise_Positive, false);
+        configureMotor(rightShooterMotor, InvertedValue.CounterClockwise_Positive, false);
+        configureMotor(kickerMotor, InvertedValue.Clockwise_Positive, false);
+        configureMotor(angleMotor, InvertedValue.CounterClockwise_Positive, true);
 //        rightShooterMotor.setControl( new Follower(leftShooterMotor.getDeviceID(), MotorAlignmentValue.Opposed) );
 
         SmartDashboard.putData(this);
     }
 
-    private void configureMotor(TalonFX motor, InvertedValue invertDirection) {
+    private void configureMotor(TalonFX motor, InvertedValue invertDirection, boolean brakeMode) {
+        NeutralModeValue mode;
+
+        if( brakeMode == true )
+            mode = NeutralModeValue.Brake;
+        else   
+            mode = NeutralModeValue.Coast;
+
         final TalonFXConfiguration config = new TalonFXConfiguration()
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(invertDirection)
-                    .withNeutralMode(NeutralModeValue.Coast)
+                    .withNeutralMode(mode)
             )
             .withVoltage(
                 new VoltageConfigs()
@@ -91,13 +102,6 @@ public class Shooter extends SubsystemBase {
             );
         }
     }
-     public void setKickerRPM(double rpm) {
-       
-            kickerMotor.setControl(
-                velocityRequest
-                    .withVelocity(RPM.of(rpm)));
-        
-    }
 
     public void setPercentOutput(double percentOutput) {
         for (final TalonFX motor : motors) {
@@ -106,6 +110,19 @@ public class Shooter extends SubsystemBase {
                     .withOutput(Volts.of(percentOutput * 12.0))
             );
         }
+    }
+
+    public void setKickerRPM(double rpm) {       
+            kickerMotor.setControl(
+                velocityRequest
+                    .withVelocity(RPM.of(rpm)));
+    }
+
+    public void setAnglePercentOutput(double percentOutput) {
+        angleMotor.setControl(
+            voltageRequest
+                .withOutput(Volts.of(percentOutput * 12.0))
+        );
     }
 
     public void stop() {

@@ -19,9 +19,11 @@ public final class Constants {
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
   public static final int CAN_motor_intake_roller = 30;
   public static final int CAN_motor_intake_updown = 31;
+  public static final int CAN_motor_intake_conveyor = 32;
   public static final int CAN_motor_shooter_left = 35;
   public static final int CAN_motor_shooter_right = 36;
   public static final int CAN_motor_kicker = 37;
+  public static final int CAN_motor_angle = 38;
 
   public static enum Mode {
     /** Running on a real robot. */

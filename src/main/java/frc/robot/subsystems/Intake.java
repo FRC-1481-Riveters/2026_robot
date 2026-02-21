@@ -36,7 +36,7 @@ import frc.robot.RobotContainer;
 public class Intake extends SubsystemBase {
     private static final AngularVelocity kVelocityTolerance = RPM.of(100);
 
-    private final TalonFXS upDownMotor, rollerMotor;
+    private final TalonFXS upDownMotor, rollerMotor, conveyorMotor;
     private TalonFXS upDownPWM, rollerPWM;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
@@ -48,9 +48,11 @@ public class Intake extends SubsystemBase {
         rc = robotContainer;
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
         rollerMotor = new TalonFXS(Constants.CAN_motor_intake_roller);
+        conveyorMotor = new TalonFXS(Constants.CAN_motor_intake_conveyor);
 
         configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 40);
         configureMotor(rollerMotor, InvertedValue.Clockwise_Positive, 120, 90);
+        configureMotor(conveyorMotor, InvertedValue.Clockwise_Positive, 50, 40);
 
         SmartDashboard.putData(this);
     }
@@ -116,6 +118,27 @@ public class Intake extends SubsystemBase {
             /*
         else
             rollerMotor.setControl(
+                velocityRequest
+                    .withVelocity(RPM.of(60 * percentOutput))
+            );
+            */
+    }
+
+    public void setConveyorPercentOutput(double percentOutput) {
+        if( percentOutput < 0.1 )
+            conveyorMotor.setControl(
+                voltageRequest
+                    .withOutput(Volts.of(0))
+            );
+        else
+            conveyorMotor.setControl(
+                voltageRequest
+                    .withOutput(Volts.of(percentOutput*12))
+            );
+
+            /*
+        else
+            conveyorMotor.setControl(
                 velocityRequest
                     .withVelocity(RPM.of(60 * percentOutput))
             );
