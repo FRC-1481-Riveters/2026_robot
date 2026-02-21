@@ -163,19 +163,7 @@ public class RobotContainer {
                 .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
                 .andThen(Commands.waitSeconds(0.5))
                 .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(2000)) )
-                .andThen( 
-                    Commands.repeatingSequence
-                    (
-                        Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.40))
-                        .andThen( Commands.waitSeconds(1.0) )
-                        .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.0)) )
-                        .andThen( Commands.waitSeconds(0.2) )
-                        .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(-0.15)) )
-                        .andThen( Commands.waitSeconds(0.2) )
-                        .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.0)) )
-                        .andThen( Commands.waitSeconds(0.2) )
-                    ) 
-                )
+                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.40)) )
             )
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
