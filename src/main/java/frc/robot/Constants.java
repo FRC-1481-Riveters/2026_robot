@@ -24,6 +24,7 @@ public final class Constants {
   public static final int CAN_motor_shooter_right = 36;
   public static final int CAN_motor_kicker = 37;
   public static final int CAN_motor_angle = 38;
+  public static final int CAN_encoder_angle = 39;
 
   public static enum Mode {
     /** Running on a real robot. */
@@ -48,7 +49,11 @@ public final class Constants {
   public static final class Shooter
   {
 
-    public static final double shootSpeed = 3000.0;
+    //public static final double shootSpeed = 1800;   // TOWER FRONT lowest angle
+    //public static final double shootSpeed = 2000;   // TOWER SIDE (back to wall) lowest angle
+    //public static final double shootSpeed = 1850;   // TRENCH lowest angle
+    //public static final double shootSpeed = 2100;   // CORNER lowest angle
+    public static final double shootSpeed = 1600;   // POINT BLANK 27" bumper to HUB highest angle
   }
 
 }

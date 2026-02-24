@@ -157,13 +157,14 @@ public class RobotContainer {
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
+        // SHOOT
         joystick.a()
             .whileTrue( 
-                Commands.runOnce( ()->m_Shooter.setShooterRPM(1800) ) //Constants.Shooter.shootSpeed
+                Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ) //Constants.Shooter.shootSpeed
                 .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
                 .andThen(Commands.waitSeconds(0.5))
-                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(2000)) )
-                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.40)) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(Constants.Shooter.shootSpeed)) )
+                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.60)) )
             )
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
@@ -177,7 +178,20 @@ public class RobotContainer {
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
         ));
-       
+
+        // UNJAM
+        joystick.y()
+            .whileTrue( 
+                Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(-0.20))
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(-500)) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(-500) ) ) //Constants.Shooter.shootSpeed
+            )
+            .onFalse(
+                Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )
+            )
+        );
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.

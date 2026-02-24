@@ -7,6 +7,8 @@ import static edu.wpi.first.units.Units.Volts;
 
 import java.util.List;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -53,9 +55,20 @@ public class Intake extends SubsystemBase {
         configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 40);
         configureMotor(rollerMotor, InvertedValue.Clockwise_Positive, 120, 90);
         configureMotor(conveyorMotor, InvertedValue.Clockwise_Positive, 50, 40);
+        
+        Logger.recordOutput("Intake/upDownPosition", 0 );
+        Logger.recordOutput("Intake/upDownCurrent", 0 );
+        Logger.recordOutput("Intake/upDownSetPoint", 0 );
+        Logger.recordOutput("Intake/RollerSpeed", 0 );
+        Logger.recordOutput("Intake/RollerCurrent", 0 );
+        Logger.recordOutput("Intake/RollerSetPoint", 0 );
+        Logger.recordOutput("Intake/ConveyorPosition", 0 );
+        Logger.recordOutput("Intake/ConveyorCurrent", 0 );
+        Logger.recordOutput("Intake/ConveyorSetPoint", 0 );
 
         SmartDashboard.putData(this);
     }
+
 
     private void configureMotor(TalonFXS motor, InvertedValue invertDirection, double statorCurrentLimit, double supplyCurrentLimit ) {
         final TalonFXSConfiguration config = new TalonFXSConfiguration()
@@ -85,6 +98,7 @@ public class Intake extends SubsystemBase {
         
         motor.getConfigurator().apply(config);
     }
+
 
     /* public void setRPM(double rpm) {
         for (final TalonFX motor : motors) {
@@ -125,7 +139,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void setConveyorPercentOutput(double percentOutput) {
-        if( percentOutput < 0.1 )
+        if( Math.abs(percentOutput) < 0.1 )
             conveyorMotor.setControl(
                 voltageRequest
                     .withOutput(Volts.of(0))
@@ -150,6 +164,10 @@ public class Intake extends SubsystemBase {
         double percentOutput;
         percentOutput = rc.getOperatorRoller();
         setRollerPercentOutput( percentOutput );
+
+       // Logger.recordOutput("Shooter/KickerSpeed", kickerMotor.getVelocity().getValue() );
+       // Logger.recordOutput("Shooter/KickerCurrent", kickerMotor.getTorqueCurrent().getValueAsDouble() );
+
         // TODO Auto-generated method stub
         super.periodic();
     }
