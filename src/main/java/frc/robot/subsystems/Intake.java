@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.List;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -14,7 +14,6 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
-import com.ctre.phoenix6.configs.VoltageConfigs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -24,45 +23,41 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
-import frc.robot.RobotContainer;
 
 
 public class Intake extends SubsystemBase {
-    private static final AngularVelocity kVelocityTolerance = RPM.of(100);
 
-    private final TalonFXS upDownMotor, rollerMotor, conveyorMotor;
-    private TalonFXS upDownPWM, rollerPWM;
+    private final TalonFXS upDownMotor, rollerInnerMotor, rollerOuterMotor, conveyorMotor;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
-    private RobotContainer rc;
 
-    private double dashboardTargetRPM = 500.0;
-
-    public Intake( RobotContainer robotContainer ) {
-        rc = robotContainer;
+    public Intake() {
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
-        rollerMotor = new TalonFXS(Constants.CAN_motor_intake_roller);
+        rollerInnerMotor = new TalonFXS(Constants.CAN_motor_intake_roller_inner);
+        rollerOuterMotor = new TalonFXS(Constants.CAN_motor_intake_roller_outer);
         conveyorMotor = new TalonFXS(Constants.CAN_motor_intake_conveyor);
 
         configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 40);
-        configureMotor(rollerMotor, InvertedValue.Clockwise_Positive, 120, 90);
+        configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 50, 60);
+        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 50, 60);
+        rollerOuterMotor.setControl(new Follower( rollerInnerMotor.getDeviceID(), MotorAlignmentValue.Opposed ) );
+
         configureMotor(conveyorMotor, InvertedValue.Clockwise_Positive, 50, 40);
         
         Logger.recordOutput("Intake/upDownPosition", 0 );
         Logger.recordOutput("Intake/upDownCurrent", 0 );
         Logger.recordOutput("Intake/upDownSetPoint", 0 );
-        Logger.recordOutput("Intake/RollerSpeed", 0 );
-        Logger.recordOutput("Intake/RollerCurrent", 0 );
+        Logger.recordOutput("Intake/RollerInnerSpeed", 0 );
+        Logger.recordOutput("Intake/RollerInnerCurrent", 0 );
+        Logger.recordOutput("Intake/RollerOuterSpeed", 0 );
+        Logger.recordOutput("Intake/RollerOuterCurrent", 0 );
         Logger.recordOutput("Intake/RollerSetPoint", 0 );
-        Logger.recordOutput("Intake/ConveyorPosition", 0 );
+        Logger.recordOutput("Intake/ConveyorSpeed", 0 );
         Logger.recordOutput("Intake/ConveyorCurrent", 0 );
         Logger.recordOutput("Intake/ConveyorSetPoint", 0 );
 
@@ -100,34 +95,43 @@ public class Intake extends SubsystemBase {
     }
 
 
-    /* public void setRPM(double rpm) {
-        for (final TalonFX motor : motors) {
-            motor.setControl(
-                velocityRequest
-                    .withVelocity(RPM.of(rpm))
-            );
-        }
-    } */
-
-    public void setUpDownPercentOutput(double percentOutput) {
+    public void setUpDownPercentOutput(double percentOutput) 
+    {
+        double volts;
+        volts = 12 * percentOutput;
         upDownMotor.setControl(
             voltageRequest
-                .withOutput(Volts.of(percentOutput * 12.0))
+                .withOutput(Volts.of(volts))
         );
+        Logger.recordOutput("Intake/UpDownSetPoint", volts );
     }
 
     
     public void setRollerPercentOutput(double percentOutput) {
-        if( percentOutput < 0.1 )
-            rollerMotor.setControl(
-                voltageRequest
-                    .withOutput(Volts.of(0))
-            );
+        double volts;
+        if( Math.abs(percentOutput) < 0.1 )
+        {
+            volts = 0;
+        }
         else
-            rollerMotor.setControl(
-                voltageRequest
-                    .withOutput(Volts.of(5))
+        {
+            volts = 12 * percentOutput;
+        }
+
+        rollerInnerMotor.setControl(
+            voltageRequest
+                .withOutput(Volts.of(volts))
+        );
+
+        Logger.recordOutput("Intake/RollerSetPoint", volts );
+
+            /*
+        else
+            conveyorMotor.setControl(
+                velocityRequest
+                    .withVelocity(RPM.of(60 * percentOutput))
             );
+            */
 
             /*
         else
@@ -139,16 +143,22 @@ public class Intake extends SubsystemBase {
     }
 
     public void setConveyorPercentOutput(double percentOutput) {
+        double volts;
         if( Math.abs(percentOutput) < 0.1 )
-            conveyorMotor.setControl(
-                voltageRequest
-                    .withOutput(Volts.of(0))
-            );
+        {
+            volts = 0;
+        }
         else
-            conveyorMotor.setControl(
-                voltageRequest
-                    .withOutput(Volts.of(percentOutput*12))
-            );
+        {
+            volts = 12 * percentOutput;
+        }
+
+        conveyorMotor.setControl(
+            voltageRequest
+                .withOutput(Volts.of(volts))
+        );
+
+        Logger.recordOutput("Intake/ConveyorSetPoint", volts );
 
             /*
         else
@@ -159,33 +169,25 @@ public class Intake extends SubsystemBase {
             */
     }
 
+    public Command rollerRequest(Supplier<Double> joystick) 
+    {
+        return run(() -> this.setRollerPercentOutput(joystick.get()) );
+    }
+
     @Override
     public void periodic() {
-        double percentOutput;
-        percentOutput = rc.getOperatorRoller();
-        setRollerPercentOutput( percentOutput );
 
-       // Logger.recordOutput("Shooter/KickerSpeed", kickerMotor.getVelocity().getValue() );
-       // Logger.recordOutput("Shooter/KickerCurrent", kickerMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Intake/UpDownPosition", upDownMotor.getPosition().getValueAsDouble() );
+        Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Intake/RollerInnerSpeed", rollerInnerMotor.getVelocity().getValueAsDouble() );
+        Logger.recordOutput("Intake/RollerInnerCurrent", rollerInnerMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Intake/RollerOuterSpeed", rollerOuterMotor.getVelocity().getValueAsDouble() );
+        Logger.recordOutput("Intake/RollerOuterCurrent", rollerOuterMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Intake/ConveyorSpeed", conveyorMotor.getVelocity().getValueAsDouble() );
+        Logger.recordOutput("Intake/ConveyorCurrent", conveyorMotor.getTorqueCurrent().getValueAsDouble() );
 
-        // TODO Auto-generated method stub
         super.periodic();
     }
 
     
-    private void initSendable(SendableBuilder builder, TalonFXS motor, String name) {
-        builder.addDoubleProperty(name + " RPM", () -> motor.getVelocity().getValue().in(RPM), null);
-        builder.addDoubleProperty(name + " Stator Current", () -> motor.getStatorCurrent().getValue().in(Amps), null);
-        builder.addDoubleProperty(name + " Supply Current", () -> motor.getSupplyCurrent().getValue().in(Amps), null);
-        builder.addDoubleProperty(name + " Torque Current", () -> motor.getTorqueCurrent().getValue().in(Amps), null);
-    }
-
-    @Override
-    public void initSendable(SendableBuilder builder) {
-        initSendable(builder, rollerMotor, "Roller");
-        initSendable(builder, upDownMotor, "IntakeUpDown");
-        builder.addStringProperty("Command", () -> getCurrentCommand() != null ? getCurrentCommand().getName() : "null", null);
-        builder.addDoubleProperty("Dashboard RPM", () -> dashboardTargetRPM, value -> dashboardTargetRPM = value);
-        builder.addDoubleProperty("Target RPM", () -> velocityRequest.getVelocityMeasure().in(RPM), null);
-    }
 }

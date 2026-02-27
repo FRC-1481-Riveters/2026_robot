@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -28,6 +30,10 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
 
+
+
+
+
 public class RobotContainer {
     private final SendableChooser<Command> autoChooser;
 
@@ -37,8 +43,11 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(MaxSpeed);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
-    private final Intake m_Intake = new Intake( this );
+    private final Intake m_Intake = new Intake();
     private final Shooter m_Shooter = new Shooter();
+    private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("/Tuning/ShooterSpeed", Constants.Shooter.shootSpeed);
+    private LoggedNetworkNumber conveyorSpeed = new LoggedNetworkNumber("/Tuning/ConveyorSpeed", Constants.Shooter.conveyorSpeed);
+
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -146,6 +155,8 @@ public class RobotContainer {
             )                    
         );
 
+        m_Intake.setDefaultCommand( m_Intake.rollerRequest( ()->operatorJoystick.getRightY() ) );
+
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
             .onFalse( Commands.runOnce( ()->AutoAimSet(false) ) ) ;
@@ -160,11 +171,11 @@ public class RobotContainer {
         // SHOOT
         joystick.a()
             .whileTrue( 
-                Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ) //Constants.Shooter.shootSpeed
+                Commands.runOnce( ()->m_Shooter.setShooterRPM(shooterSpeed.get()) ) 
                 .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
                 .andThen(Commands.waitSeconds(0.5))
-                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(Constants.Shooter.shootSpeed)) )
-                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.60)) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(shooterSpeed.get())) )
+                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
             )
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
@@ -233,11 +244,6 @@ public class RobotContainer {
     }
 
 
-
-    public double getOperatorRoller()
-    {
-        return  operatorJoystick.getLeftTriggerAxis();
-    }
 
     public Command getAutonomousCommand() {
         // Simple drive forward auton

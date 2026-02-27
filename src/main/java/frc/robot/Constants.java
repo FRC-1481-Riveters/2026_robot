@@ -17,9 +17,12 @@ import edu.wpi.first.wpilibj.RobotBase;
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
-  public static final int CAN_motor_intake_roller = 30;
+
+  public static final int CAN_motor_intake_roller_inner = 30;
   public static final int CAN_motor_intake_updown = 31;
   public static final int CAN_motor_intake_conveyor = 32;
+  public static final int CAN_motor_intake_roller_outer = 33;
+
   public static final int CAN_motor_shooter_left = 35;
   public static final int CAN_motor_shooter_right = 36;
   public static final int CAN_motor_kicker = 37;
@@ -54,6 +57,7 @@ public final class Constants {
     //public static final double shootSpeed = 1850;   // TRENCH lowest angle
     //public static final double shootSpeed = 2100;   // CORNER lowest angle
     public static final double shootSpeed = 1600;   // POINT BLANK 27" bumper to HUB highest angle
+    public static final double conveyorSpeed = 0.6;
   }
 
 }
