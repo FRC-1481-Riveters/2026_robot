@@ -42,24 +42,26 @@ public class Intake extends SubsystemBase {
         rollerOuterMotor = new TalonFXS(Constants.CAN_motor_intake_roller_outer);
         conveyorMotor = new TalonFXS(Constants.CAN_motor_intake_conveyor);
 
-        configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 40);
+        configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 60);
         configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 50, 60);
         configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 50, 60);
         rollerOuterMotor.setControl(new Follower( rollerInnerMotor.getDeviceID(), MotorAlignmentValue.Opposed ) );
 
         configureMotor(conveyorMotor, InvertedValue.Clockwise_Positive, 50, 40);
-        
+ 
+        // AdvantageKit inputs
         Logger.recordOutput("Intake/upDownPosition", 0 );
         Logger.recordOutput("Intake/upDownCurrent", 0 );
-        Logger.recordOutput("Intake/upDownSetPoint", 0 );
         Logger.recordOutput("Intake/RollerInnerSpeed", 0 );
         Logger.recordOutput("Intake/RollerInnerCurrent", 0 );
         Logger.recordOutput("Intake/RollerOuterSpeed", 0 );
         Logger.recordOutput("Intake/RollerOuterCurrent", 0 );
-        Logger.recordOutput("Intake/RollerSetPoint", 0 );
-        Logger.recordOutput("Intake/ConveyorSpeed", 0 );
         Logger.recordOutput("Intake/ConveyorCurrent", 0 );
         Logger.recordOutput("Intake/ConveyorSetPoint", 0 );
+        // AdvantageKit outputs
+        Logger.recordOutput("Intake/upDownSetPoint", 0 );
+        Logger.recordOutput("Intake/RollerSetPoint", 0 );
+        Logger.recordOutput("Intake/ConveyorSpeed", 0 );
 
         SmartDashboard.putData(this);
     }
