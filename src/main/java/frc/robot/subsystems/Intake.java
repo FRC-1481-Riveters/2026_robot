@@ -15,8 +15,10 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
@@ -25,6 +27,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -42,26 +45,34 @@ public class Intake extends SubsystemBase {
         rollerOuterMotor = new TalonFXS(Constants.CAN_motor_intake_roller_outer);
         conveyorMotor = new TalonFXS(Constants.CAN_motor_intake_conveyor);
 
-        configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50, 60);
-        configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 50, 60);
-        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 50, 60);
-        rollerOuterMotor.setControl(new Follower( rollerInnerMotor.getDeviceID(), MotorAlignmentValue.Opposed ) );
+        configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50,60);
+        configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 70, 80);
+        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 70, 80);
+        rollerOuterMotor.setControl(new Follower( rollerInnerMotor.getDeviceID(), MotorAlignmentValue.Aligned ) );
 
+        upDownMotor.setPosition(0);
         configureMotor(conveyorMotor, InvertedValue.Clockwise_Positive, 50, 40);
  
         // AdvantageKit inputs
-        Logger.recordOutput("Intake/upDownPosition", 0 );
-        Logger.recordOutput("Intake/upDownCurrent", 0 );
-        Logger.recordOutput("Intake/RollerInnerSpeed", 0 );
-        Logger.recordOutput("Intake/RollerInnerCurrent", 0 );
-        Logger.recordOutput("Intake/RollerOuterSpeed", 0 );
-        Logger.recordOutput("Intake/RollerOuterCurrent", 0 );
-        Logger.recordOutput("Intake/ConveyorCurrent", 0 );
-        Logger.recordOutput("Intake/ConveyorSetPoint", 0 );
+        Logger.recordOutput("Intake/upDownPosition", 0.0 );
+        Logger.recordOutput("Intake/upDownCurrent", 0.0 );
+        Logger.recordOutput("Intake/RollerInnerSpeed", 0.0 );
+        Logger.recordOutput("Intake/RollerInnerCurrent", 0.0 );
+        Logger.recordOutput("Intake/RollerOuterSpeed", 0.0 );
+        Logger.recordOutput("Intake/RollerOuterCurrent", 0.0 );
+        Logger.recordOutput("Intake/ConveyorCurrent", 0.0 );
+        Logger.recordOutput("Intake/ConveyorSetPoint", 0.0 );
         // AdvantageKit outputs
-        Logger.recordOutput("Intake/upDownSetPoint", 0 );
-        Logger.recordOutput("Intake/RollerSetPoint", 0 );
-        Logger.recordOutput("Intake/ConveyorSpeed", 0 );
+        Logger.recordOutput("Intake/upDownSetPoint", 0.0 );
+        Logger.recordOutput("Intake/RollerSetPoint", 0.0 );
+        Logger.recordOutput("Intake/ConveyorSpeed", 0.0);
+
+        var slot0Configs = new Slot0Configs();
+        slot0Configs.kP = 0.67; // An error of 1 rotation results in 2.4 V output
+        slot0Configs.kI = 0; // no output for integrated error
+        slot0Configs.kD = 0.0; // A velocity of 1 rps results in 0.1 V output
+        slot0Configs.kV = 2.0;
+        upDownMotor.getConfigurator().apply(slot0Configs);
 
         SmartDashboard.putData(this);
     }
@@ -72,7 +83,7 @@ public class Intake extends SubsystemBase {
             .withCommutation(
                 new CommutationConfigs()
                     .withMotorArrangement(MotorArrangementValue.VORTEX_JST)
-            )   
+            )
             .withMotorOutput(
                 new MotorOutputConfigs()
                     .withInverted(invertDirection)
@@ -108,6 +119,13 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/UpDownSetPoint", volts );
     }
 
+    public void setUpDownPosition (double position) 
+    {
+        final PositionVoltage m_request = new PositionVoltage(0).withSlot(0);
+        upDownMotor.setControl(m_request.withPosition(position));
+        Logger.recordOutput("Intake/UpDownSetPoint", position );
+    }
+
     
     public void setRollerPercentOutput(double percentOutput) {
         double volts;
@@ -117,6 +135,7 @@ public class Intake extends SubsystemBase {
         }
         else
         {
+//            percentOutput /= 2.0;   // 50% is our ideal running speed (maximum torque)
             volts = 12 * percentOutput;
         }
 
@@ -127,21 +146,13 @@ public class Intake extends SubsystemBase {
 
         Logger.recordOutput("Intake/RollerSetPoint", volts );
 
-            /*
-        else
-            conveyorMotor.setControl(
-                velocityRequest
-                    .withVelocity(RPM.of(60 * percentOutput))
-            );
-            */
-
-            /*
+        /*
         else
             rollerMotor.setControl(
                 velocityRequest
                     .withVelocity(RPM.of(60 * percentOutput))
             );
-            */
+        */
     }
 
     public void setConveyorPercentOutput(double percentOutput) {
@@ -162,19 +173,28 @@ public class Intake extends SubsystemBase {
 
         Logger.recordOutput("Intake/ConveyorSetPoint", volts );
 
-            /*
+        /*
         else
             conveyorMotor.setControl(
                 velocityRequest
                     .withVelocity(RPM.of(60 * percentOutput))
             );
-            */
+        */
     }
 
-    public Command rollerRequest(Supplier<Double> joystick) 
+    public Command rollerRequest(Supplier<Double> joystick)
     {
-        return run(() -> this.setRollerPercentOutput(joystick.get()) );
+        return run( () -> this.setRollerPercentOutput( joystick.get() ) );
     }
+
+    public Command rollerCommand( double percentOutput )
+    {
+        return(
+            runOnce( ()->this.setRollerPercentOutput( percentOutput ) )
+            .andThen( Commands.waitSeconds(2.0))
+        );
+    }
+
 
     @Override
     public void periodic() {

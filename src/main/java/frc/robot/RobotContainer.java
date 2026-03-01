@@ -46,8 +46,8 @@ public class RobotContainer {
     private final Intake m_Intake = new Intake();
     private final Shooter m_Shooter = new Shooter();
     private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("/Tuning/ShooterSpeed", Constants.Shooter.shootSpeed);
+    private LoggedNetworkNumber kickerSpeed = new LoggedNetworkNumber("/Tuning/KickerSpeed", Constants.Shooter.kickerSpeed);
     private LoggedNetworkNumber conveyorSpeed = new LoggedNetworkNumber("/Tuning/ConveyorSpeed", Constants.Shooter.conveyorSpeed);
-
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -60,6 +60,8 @@ public class RobotContainer {
     private final CommandXboxController operatorJoystick = new CommandXboxController(1);
 
     private boolean autoAimPressed = false;
+    private boolean bumpSpeedPressedOperator = false;
+    private boolean bumpSpeedPressedDriver = false;
 
     public RobotContainer() {
         configureBindings();
@@ -104,7 +106,7 @@ public class RobotContainer {
 
     private double deadBandRightX() {
         double newValue = joystick.getRightX();
-        if ((newValue <= 0.05) && (newValue >= -0.05))
+        if ((newValue <= 0.08) && (newValue >= -0.08))
         {
             return 0.0;
         }
@@ -121,9 +123,20 @@ public class RobotContainer {
 
     private double deadBandLeftY() {
         double newValue = joystick.getLeftY();
-        if ((newValue <= 0.05) && (newValue >= -0.05))
+        if ((newValue <= 0.08) && (newValue >= -0.08))
         {
             return 0.0;
+        }
+        else if( bumpSpeedPressedDriver || bumpSpeedPressedOperator )
+        {
+            if( newValue < 0 )
+            {
+                return( -1 * Constants.Drive.bumpSpeed );
+            }
+            else
+            {
+                return( Constants.Drive.bumpSpeed );
+            }
         }
         else if (newValue < 0) 
         {
@@ -142,6 +155,18 @@ public class RobotContainer {
         autoAimPressed = newval;
     }
 
+    private void BumpSpeedSet( boolean newval, boolean byOperator )
+    {
+        if( byOperator )
+        {
+            bumpSpeedPressedOperator = newval;
+        }
+        else
+        {
+            bumpSpeedPressedDriver = newval;
+        }
+    }
+
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
@@ -156,6 +181,7 @@ public class RobotContainer {
         );
 
         m_Intake.setDefaultCommand( m_Intake.rollerRequest( ()->operatorJoystick.getRightY() ) );
+        m_Shooter.setDefaultCommand( m_Shooter.angleRequest( ()->operatorJoystick.getLeftY() ) );
 
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
@@ -174,8 +200,12 @@ public class RobotContainer {
                 Commands.runOnce( ()->m_Shooter.setShooterRPM(shooterSpeed.get()) ) 
                 .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
                 .andThen(Commands.waitSeconds(0.5))
-                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(shooterSpeed.get())) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(kickerSpeed.get())) )
                 .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
+//                .andThen(Commands.waitSeconds(3.0))
+//                .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ) )
+//                .andThen(Commands.runOnce( ()->m_Intake.rollerCommand(1.0)))
+//                .andThen(Commands.runOnce( ()->m_Intake.rollerCommand(0.30)))
             )
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
@@ -193,9 +223,9 @@ public class RobotContainer {
         // UNJAM
         joystick.y()
             .whileTrue( 
-                Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(-0.20))
-                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(-500)) )
-                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(-500) ) ) //Constants.Shooter.shootSpeed
+                Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(-0.50))
+                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(-2000)) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(-2000) ) ) //Constants.Shooter.shootSpeed
             )
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
@@ -219,6 +249,11 @@ public class RobotContainer {
         joystick.x()
             .whileTrue(drivetrain.applyRequest(() -> brake));
 
+        joystick.leftBumper()
+            .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, false ) ) )
+            .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, false )) );
+
+
         // =========== OPERATOR JOYSTICK =============
         // =========== OPERATOR JOYSTICK =============
         // =========== OPERATOR JOYSTICK =============
@@ -241,6 +276,10 @@ public class RobotContainer {
         operatorJoystick.axisLessThan(2, -0.1)
             .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(-0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
+
+        operatorJoystick.leftBumper()
+            .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, false ) ) )
+            .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, false )) );
     }
 
 

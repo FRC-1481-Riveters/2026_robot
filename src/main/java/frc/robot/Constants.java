@@ -51,13 +51,27 @@ public final class Constants {
   }
   public static final class Shooter
   {
-
     //public static final double shootSpeed = 1800;   // TOWER FRONT lowest angle
     //public static final double shootSpeed = 2000;   // TOWER SIDE (back to wall) lowest angle
     //public static final double shootSpeed = 1850;   // TRENCH lowest angle
     //public static final double shootSpeed = 2100;   // CORNER lowest angle
-    public static final double shootSpeed = 1600;   // POINT BLANK 27" bumper to HUB highest angle
-    public static final double conveyorSpeed = 0.6;
+    //public static final double shootSpeed = 1600;   // POINT BLANK 27" bumper to HUB highest angle
+    public static final double kickPercent = 0.75;
+    public static final double shootSpeed = 1600;
+    public static final double kickerSpeed = 3000;
+    public static final double conveyorSpeed = 0.4;
   }
 
+  public static final class Intake
+  {
+    public static final double upDownPositionDown = -29.6;
+    public static final double upDownPosition30Degrees = -19.0;
+    public static final double upDownPositionUp = 0.0;
+
+  }
+
+  public static final class Drive
+  {
+    public static final double bumpSpeed = 0.4; //0.3 was kind, 0.5 too much air
+  }
 }
