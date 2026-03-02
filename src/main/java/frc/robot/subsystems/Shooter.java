@@ -10,14 +10,19 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.VoltageConfigs;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import frc.robot.Constants;
@@ -38,6 +43,7 @@ public class Shooter extends SubsystemBase {
     private final List<TalonFX> motors;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
+    private final CANcoder angleCancoder;
     
     public Shooter() {
         leftShooterMotor = new TalonFX(Constants.CAN_motor_shooter_left);
@@ -46,14 +52,13 @@ public class Shooter extends SubsystemBase {
 
         kickerMotor = new TalonFX(Constants.CAN_motor_kicker);
         angleMotor = new TalonFX(Constants.CAN_motor_angle);
+        angleCancoder = new CANcoder(Constants.CAN_encoder_angle);
 
         configureMotor(leftShooterMotor, InvertedValue.Clockwise_Positive, false, 50, 60);
         configureMotor(rightShooterMotor, InvertedValue.CounterClockwise_Positive, false, 50, 60);
         configureMotor(kickerMotor, InvertedValue.Clockwise_Positive, false, 120, 100);
-        configureMotor(angleMotor, InvertedValue.CounterClockwise_Positive, true, 15, 20);
+        configureAngleMotor(angleMotor, InvertedValue.CounterClockwise_Positive, true, 20, 25);
 
-        Logger.recordOutput("PdhTotalCurrent", 0.0 );
-        Logger.recordOutput("PdhTotalEnergy", 0.0 );
         Logger.recordOutput("Shooter/ShooterLeftSpeed", 0.0 );
         Logger.recordOutput("Shooter/ShooterRightSpeed", 0.0);
         Logger.recordOutput("Shooter/ShooterSetPoint", 0.0 );
@@ -66,6 +71,7 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Shooter/AngleSetPoint", 0.0 );
         Logger.recordOutput("Shooter/AngleOutput", 0.0 );
         Logger.recordOutput("Shooter/AngleCurrent", 0.0 );
+        Logger.recordOutput("Shooter/AngleEncoder", 0.0 );
 
         SmartDashboard.putData(this);
     }
@@ -78,6 +84,9 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Shooter/ShooterLeftCurrent", leftShooterMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Shooter/KickerSpeed", kickerMotor.getVelocity().getValue() );
         Logger.recordOutput("Shooter/KickerCurrent", kickerMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Shooter/AnglePosition", angleMotor.getPosition().getValue() );
+        Logger.recordOutput("Shooter/AngleCurrent", angleMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Shooter/AngleEncoder", angleCancoder.getPosition().getValueAsDouble() );
 
         super.periodic();
     }
@@ -99,7 +108,7 @@ public class Shooter extends SubsystemBase {
             )
             .withVoltage(
                 new VoltageConfigs()
-                    .withPeakReverseVoltage(Volts.of(0))
+                    .withPeakReverseVoltage(Volts.of(-12.0))
             )
             .withCurrentLimits(
                 new CurrentLimitsConfigs()
@@ -119,6 +128,49 @@ public class Shooter extends SubsystemBase {
         motor.getConfigurator().apply(config);
     }
 
+    private void configureAngleMotor(TalonFX motor, InvertedValue invertDirection, boolean brakeMode, double statorLimit, double supplyLimit ) {
+        NeutralModeValue mode;
+
+        if( brakeMode == true )
+            mode = NeutralModeValue.Brake;
+        else   
+            mode = NeutralModeValue.Coast;
+
+        final TalonFXConfiguration config = new TalonFXConfiguration()
+            .withMotorOutput(
+                new MotorOutputConfigs()
+                    .withInverted(invertDirection)
+                    .withNeutralMode(mode)
+            )
+            .withVoltage(
+                new VoltageConfigs()
+                    .withPeakReverseVoltage(Volts.of(-12.0))
+            )
+            .withCurrentLimits(
+                new CurrentLimitsConfigs()
+                    .withStatorCurrentLimit(Amps.of(statorLimit))
+                    .withStatorCurrentLimitEnable(true)
+                    .withSupplyCurrentLimit(Amps.of(supplyLimit))
+                    .withSupplyCurrentLimitEnable(true)
+            )
+            .withSlot0(
+                new Slot0Configs()
+                    .withKP(5)
+                    .withKI(0.01)
+                    .withKD(0)
+                    .withKV(0)
+            );
+
+        motor.getConfigurator().apply(config);
+
+        double angleEncoderPosition = angleCancoder.getPosition().getValueAsDouble();
+        angleCancoder.setPosition( angleEncoderPosition );
+        // CANcoder bottom=0, top=0.72
+        // motor position bottom=0, top=-17.2
+        double angleMotorPosition = angleEncoderPosition * (-17.2 / 0.72);
+        angleMotor.setPosition( angleMotorPosition );
+    }
+
     public Command angleRequest(Supplier<Double> joystick) 
     {
         return run( () -> this.setAnglePercentOutput( joystick.get() ) );
@@ -132,6 +184,7 @@ public class Shooter extends SubsystemBase {
             );
         }
         Logger.recordOutput("Shooter/ShooterSetPoint", rpm);
+        System.out.println("setShooterRPM " + rpm);
     }
 
     public void setPercentOutput(double percentOutput) {
@@ -150,16 +203,15 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Shooter/KickerSetPoint", rpm );        
     }
 
+    public void setAnglePosition(double position) 
+    {
+        final PositionVoltage m_request = new PositionVoltage(0).withSlot(0);
+        angleMotor.setControl(m_request.withPosition(position));
+        Logger.recordOutput("Shooter/AngleOutput", position );
+    }
+
     public void setAnglePercentOutput(double percentOutput) {
         double volts;
-        if( percentOutput < 0.1 )
-            percentOutput = 0;
-        else
-        {
-            if( percentOutput > 0.4 ) percentOutput = 0.4;
-            if( percentOutput < -0.4 ) percentOutput = -0.4;
-        }
-
         volts = percentOutput * 12.0;
         angleMotor.setControl(
             voltageRequest

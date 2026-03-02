@@ -62,6 +62,8 @@ public class RobotContainer {
     private boolean autoAimPressed = false;
     private boolean bumpSpeedPressedOperator = false;
     private boolean bumpSpeedPressedDriver = false;
+    private boolean pickupSpeedPressedOperator = false;
+    private boolean pickupSpeedPressedDriver = false;
 
     public RobotContainer() {
         configureBindings();
@@ -138,6 +140,17 @@ public class RobotContainer {
                 return( Constants.Drive.bumpSpeed );
             }
         }
+        else if( pickupSpeedPressedDriver || pickupSpeedPressedOperator )
+        {
+            if( newValue < 0 )
+            {
+                return( -1 * Constants.Drive.pickupSpeed );
+            }
+            else
+            {
+                return( Constants.Drive.pickupSpeed );
+            }
+        }
         else if (newValue < 0) 
         {
             return (-1*(newValue*newValue));
@@ -167,12 +180,23 @@ public class RobotContainer {
         }
     }
 
+    private void PickupSpeedSet( boolean newval, boolean byOperator )
+    {
+        if( byOperator )
+        {
+            pickupSpeedPressedOperator = newval;
+        }
+        else
+        {
+            pickupSpeedPressedDriver = newval;
+        }
+    }
+
     private void configureBindings() {
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
-            
+            // Drivetrain will execute this command periodically when no other Drivetrain command is scheduled            
             drivetrain.applyRequest(() ->
                 drive.withVelocityX(-deadBandLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
                     .withVelocityY(-deadBandLeftX() * MaxSpeed) // Drive left with negative X (left)
@@ -180,8 +204,11 @@ public class RobotContainer {
             )                    
         );
 
-        m_Intake.setDefaultCommand( m_Intake.rollerRequest( ()->operatorJoystick.getRightY() ) );
-        m_Shooter.setDefaultCommand( m_Shooter.angleRequest( ()->operatorJoystick.getLeftY() ) );
+        // Intake will execute this command periodically when no other Intake command is scheduled
+        m_Intake.setDefaultCommand( m_Intake.rollerRequest( ()->clipRollers() ) );
+
+        // Shooter will execute this command periodically when no other Shooter command is scheduled
+        //!*!*!* TODO: m_Shooter.setDefaultCommand( m_Shooter.angleRequest( ()->clipRollers() ) );
 
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
@@ -202,13 +229,16 @@ public class RobotContainer {
                 .andThen(Commands.waitSeconds(0.5))
                 .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(kickerSpeed.get())) )
                 .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
-//                .andThen(Commands.waitSeconds(3.0))
-//                .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ) )
-//                .andThen(Commands.runOnce( ()->m_Intake.rollerCommand(1.0)))
-//                .andThen(Commands.runOnce( ()->m_Intake.rollerCommand(0.30)))
+                .andThen(Commands.waitSeconds(3.0))
+                .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ))
+                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(Constants.Intake.rollersPercentMax)))
+                .andThen(Commands.waitSeconds(0.5))
+                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(0.3)))
+                .andThen(Commands.waitSeconds(10.0))
             )
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
+                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(0)))
                 .andThen(Commands.waitSeconds(0.25))
                 .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
                 .andThen(Commands.waitSeconds(0.25))
@@ -252,6 +282,9 @@ public class RobotContainer {
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, false ) ) )
             .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, false )) );
+        joystick.rightBumper()
+            .onTrue( Commands.runOnce( ()->PickupSpeedSet( true, false ) ) )
+            .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, false )) );
 
 
         // =========== OPERATOR JOYSTICK =============
@@ -266,23 +299,51 @@ public class RobotContainer {
             .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
        
+        operatorJoystick.povLeft()
+            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePosition( -16.5 )))
+            .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0))) ;
+
+        operatorJoystick.povRight()
+            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePosition( -0.6 )))
+            .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0))) ;
+
         operatorJoystick.a()
             .onTrue(Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ))
             .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ));
         
-        operatorJoystick.axisGreaterThan(2, 0.1)
-            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0.2) ) )
+        operatorJoystick.axisGreaterThan(1, 0.2)
+            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0.5) ) )
             .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
-        operatorJoystick.axisLessThan(2, -0.1)
-            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(-0.2) ) )
+        operatorJoystick.axisLessThan(1, -0.2)
+            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(-0.5) ) )
             .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
 
         operatorJoystick.leftBumper()
-            .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, false ) ) )
-            .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, false )) );
+            .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, true ) ) )
+            .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, true )) );
+        operatorJoystick.rightBumper()
+            .onTrue( Commands.runOnce( ()->PickupSpeedSet( true, true ) ) )
+            .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, true )) );
     }
 
 
+    public double clipRollers()
+    {
+        double temp;
+
+        temp = m_Intake.getRollerCommandPercent();
+        if( temp == 0.0 )
+        {
+            temp = operatorJoystick.getRightY();
+            if (temp > Constants.Intake.rollersPercentMax) {
+                temp = Constants.Intake.rollersPercentMax;
+            }
+            else if (temp < -Constants.Intake.rollersPercentMax) {
+                temp = -Constants.Intake.rollersPercentMax;
+            }
+        }
+        return temp;
+    }
 
     public Command getAutonomousCommand() {
         // Simple drive forward auton

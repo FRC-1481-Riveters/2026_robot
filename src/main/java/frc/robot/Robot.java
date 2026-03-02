@@ -92,6 +92,7 @@ public class Robot extends LoggedRobot {
         if (m_autonomousCommand != null) {
             CommandScheduler.getInstance().cancel(m_autonomousCommand);
         }
+        CommandScheduler.getInstance().cancelAll();
     }
 
     @Override

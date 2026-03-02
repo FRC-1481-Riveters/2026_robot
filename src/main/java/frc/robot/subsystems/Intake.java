@@ -28,6 +28,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -38,6 +39,7 @@ public class Intake extends SubsystemBase {
     private final TalonFXS upDownMotor, rollerInnerMotor, rollerOuterMotor, conveyorMotor;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
+    private double rollerCommandPercent;
 
     public Intake() {
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
@@ -182,20 +184,25 @@ public class Intake extends SubsystemBase {
         */
     }
 
-    public Command rollerRequest(Supplier<Double> joystick)
+    // rollerRequest: this is the default command for the Intake Subsystem
+    // - that means it runs continuously until there's some other command
+    // - RobotContainer calls this by passing in a function that returns a joystick axis (a Supplier<Double>)
+    public Command rollerRequest(Supplier<Double> joystickAxisFunction)
     {
-        return run( () -> this.setRollerPercentOutput( joystick.get() ) );
-    }
-
-    public Command rollerCommand( double percentOutput )
-    {
-        return(
-            runOnce( ()->this.setRollerPercentOutput( percentOutput ) )
-            .andThen( Commands.waitSeconds(2.0))
-        );
+        return run( ()->setRollerPercentOutput(joystickAxisFunction.get()));        
     }
 
 
+    public void setRollerCommandPercent( double percent )
+    {
+        rollerCommandPercent = percent;
+    }
+
+    public double getRollerCommandPercent() 
+    {
+        return rollerCommandPercent;
+    }
+    
     @Override
     public void periodic() {
 
