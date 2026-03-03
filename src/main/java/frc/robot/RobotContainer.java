@@ -39,6 +39,7 @@ public class RobotContainer {
 
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private double shootingSpeed = 1800;
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
@@ -84,7 +85,7 @@ public class RobotContainer {
 
     private double deadBandLeftX() {
         double newValue = joystick.getLeftX();
-        if ((newValue <= 0.05) && (newValue >= -0.05))
+        if ((newValue <= 0.08) && (newValue >= -0.08))
         {
             if( autoAimPressed )
             {
@@ -224,16 +225,16 @@ public class RobotContainer {
         // SHOOT
         joystick.a()
             .whileTrue( 
-                Commands.runOnce( ()->m_Shooter.setShooterRPM(shooterSpeed.get()) ) 
+                Commands.runOnce( ()->m_Shooter.setShooterRPM(shootingSpeed) ) 
                 .andThen(Commands.waitUntil( m_Shooter::isVelocityWithinTolerance) )
-                .andThen(Commands.waitSeconds(0.5))
                 .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(kickerSpeed.get())) )
-                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
-                .andThen(Commands.waitSeconds(3.0))
-                .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ))
-                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(Constants.Intake.rollersPercentMax)))
                 .andThen(Commands.waitSeconds(0.5))
-                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(0.3)))
+                .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
+                .andThen(Commands.waitSeconds(2.5))
+                .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ))
+                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-Constants.Intake.rollersPercentMax)))
+                .andThen(Commands.waitSeconds(0.5))
+                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-0.3)))
                 .andThen(Commands.waitSeconds(10.0))
             )
             .onFalse(
@@ -311,6 +312,15 @@ public class RobotContainer {
             .onTrue(Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ))
             .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ));
         
+        operatorJoystick.x()
+            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedCorner, Constants.Shooter.shooterAnglePositionMin )));
+
+        operatorJoystick.y()
+            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTowerFront, Constants.Shooter.shooterAnglePositionTower )));
+
+        operatorJoystick.b()
+            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTowerFront, Constants.Shooter.shooterAnglePositionMin )));
+
         operatorJoystick.axisGreaterThan(1, 0.2)
             .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0.5) ) )
             .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
@@ -326,6 +336,11 @@ public class RobotContainer {
             .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, true )) );
     }
 
+    public void setShooter( double speed, double angle )
+    {
+        shootingSpeed = speed;
+        m_Shooter.setAnglePosition( angle );
+    }
 
     public double clipRollers()
     {
