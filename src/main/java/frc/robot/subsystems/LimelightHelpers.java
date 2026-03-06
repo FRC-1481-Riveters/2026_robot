@@ -40,6 +40,11 @@ public class LimelightHelpers {
 
     private static final Map<String, DoubleArrayEntry> doubleArrayEntries = new ConcurrentHashMap<>();
 
+    public void throttleSlow( String limelightName, int frameSkip )
+    {
+        LimelightHelpers.setLimelightNTDouble(limelightName, "throttle_slow", frameSkip);
+    }
+
     /**
      * Represents a Color/Retroreflective Target Result extracted from JSON Output
      */

@@ -25,6 +25,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -39,6 +40,7 @@ public class Intake extends SubsystemBase {
     private final TalonFXS upDownMotor, rollerInnerMotor, rollerOuterMotor, conveyorMotor;
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
+    private final DigitalInput upDownLimitSwitch = new DigitalInput(0);
     private double rollerCommandPercent;
 
     public Intake() {
@@ -66,6 +68,7 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/ConveyorSetPoint", 0.0 );
         // AdvantageKit outputs
         Logger.recordOutput("Intake/upDownSetPoint", 0.0 );
+        Logger.recordOutput("Intake/upDownLimitSwitch", false );
         Logger.recordOutput("Intake/RollerSetPoint", 0.0 );
         Logger.recordOutput("Intake/ConveyorSpeed", 0.0);
 
@@ -206,8 +209,14 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
 
+        boolean upDownLimit = upDownLimitSwitch.get();
+        if( upDownLimit == false )
+        {
+            upDownMotor.setPosition(Constants.Intake.upDownPositionDown);
+        }
         Logger.recordOutput("Intake/UpDownPosition", upDownMotor.getPosition().getValueAsDouble() );
         Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
+        Logger.recordOutput("Intake/upDownLimitSwitch", upDownLimit );
         Logger.recordOutput("Intake/RollerInnerSpeed", rollerInnerMotor.getVelocity().getValueAsDouble() );
         Logger.recordOutput("Intake/RollerInnerCurrent", rollerInnerMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/RollerOuterSpeed", rollerOuterMotor.getVelocity().getValueAsDouble() );

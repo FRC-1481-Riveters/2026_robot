@@ -1,0 +1,49 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Into center"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "IntakeLower"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Intake center"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RollerStop"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Center to hub"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ShootShort"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

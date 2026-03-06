@@ -64,13 +64,17 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void disabledInit() {}
+    public void disabledInit() {
+        m_robotContainer.limelightSlow(true);
+    }
 
     @Override
     public void disabledPeriodic() {}
 
     @Override
-    public void disabledExit() {}
+    public void disabledExit() {
+        m_robotContainer.limelightSlow(false);
+    }
 
     @Override
     public void autonomousInit() {

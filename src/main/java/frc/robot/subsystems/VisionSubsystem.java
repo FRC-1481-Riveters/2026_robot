@@ -81,7 +81,7 @@ public class VisionSubsystem extends SubsystemBase {
         {
           bValid = false;
         }
-        m_commandSwerveDrivetrain.updateOdometry(mt2.pose, bValid, mt2.timestampSeconds,mt2.tagCount, mt2.avgTagDist);
+//TODO fixme        m_commandSwerveDrivetrain.updateOdometry(mt2.pose, bValid, mt2.timestampSeconds,mt2.tagCount, mt2.avgTagDist);
       }
 
       if( bValid == false )
@@ -94,7 +94,7 @@ public class VisionSubsystem extends SubsystemBase {
           {
             bValid = false;
           }
-          m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
+//TODO fixme          m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
         }
       }
   }
@@ -123,6 +123,14 @@ public class VisionSubsystem extends SubsystemBase {
     } else {
       return false;
     }
+  }
+
+  public void limelightSlow( boolean slow )
+  {
+    //!*!*!* TODO fixme if( slow )
+      //!*!*!* TODO fixme ThrottleSlow.throttleSlow( 60 );
+    //!*!*!* TODO fixme else
+      //!*!*!* TODO fixme ThrottleSlow.throttleSlow( 60 );
   }
 
   public RawFiducial getClosestFiducial() {
