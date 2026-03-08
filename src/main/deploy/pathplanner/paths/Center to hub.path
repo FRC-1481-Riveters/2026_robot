@@ -3,12 +3,12 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.607,
+        "x": 8.0,
         "y": 4.435
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.798588888888889,
+        "x": 7.191588888888889,
         "y": 4.71711111111111
       },
       "isLocked": false,
@@ -48,12 +48,12 @@
     },
     {
       "anchor": {
-        "x": 3.037233333333333,
-        "y": 4.970466666666666
+        "x": 2.7,
+        "y": 4.97
       },
       "prevControl": {
-        "x": 3.1639111111111107,
-        "y": 5.291555555555554
+        "x": 2.826677777777778,
+        "y": 5.291088888888888
       },
       "nextControl": null,
       "isLocked": false,
@@ -68,7 +68,20 @@
   ],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "RollerStop",
+      "waypointRelativePos": 1.38,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "ShootShortSpinup",
+      "waypointRelativePos": 2.5,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 3.0,
     "maxAcceleration": 3.0,

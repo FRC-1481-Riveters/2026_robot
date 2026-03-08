@@ -3,6 +3,9 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.LimelightHelpers.*;
+
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,7 +27,11 @@ public class VisionSubsystem extends SubsystemBase {
     LimelightHelpers.SetRobotOrientation("limelight-left", 0, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-right", 0, 0, 0, 0, 0, 0);
     //TODO: only do this hack when we're in E3
-    m_commandSwerveDrivetrain.resetPose( new Pose2d(14.12, 3.88, new Rotation2d( 0 ) ) );
+    Pose2d poseTemp = new Pose2d(14.12, 3.88, new Rotation2d( 0 ) );
+    m_commandSwerveDrivetrain.resetPose( poseTemp );
+    Logger.recordOutput("Vision/PoseBack", poseTemp );
+    Logger.recordOutput("Vision/PoseLeft", poseTemp );
+    Logger.recordOutput("Vision/PoseRight", poseTemp );
   }
 
   public static class NoSuchTargetException extends RuntimeException {
@@ -38,15 +45,34 @@ public class VisionSubsystem extends SubsystemBase {
     // LimelightHelpers.setCropWindow("limelight-back", -0.5, 0.5, -0.5, 0.5);
     LimelightHelpers.setCameraPose_RobotSpace(
         "limelight-back",
-        -0.2921,
-        0.0,
+        -0.305,
+        0 ,
         0.606,
         0,
-        4,
+        0 ,
         180
         );
+    LimelightHelpers.setCameraPose_RobotSpace(
+        "limelight-left",
+        -0.203,
+        -0.381,
+        0.673,
+        0,
+        0,
+        90
+        );
+    LimelightHelpers.setCameraPose_RobotSpace(
+        "limelight-right",
+        -0.203,
+        0.381,
+        0.673,
+        0,
+        0,
+        -90
+        );
         LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-two",  new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {6});
     }
 
   @Override
@@ -58,7 +84,8 @@ public class VisionSubsystem extends SubsystemBase {
 
       double headingDegrees = driveState.Pose.getRotation().getDegrees();
       LimelightHelpers.SetRobotOrientation("limelight-back", headingDegrees, 0, 0, 0, 0, 0);
-      LimelightHelpers.SetRobotOrientation("limelight-two", headingDegrees, 0, 0, 0, 0, 0);
+      LimelightHelpers.SetRobotOrientation("limelight-left", headingDegrees, 0, 0, 0, 0, 0);
+      LimelightHelpers.SetRobotOrientation("limelight-right", headingDegrees, 0, 0, 0, 0, 0);
 
       if(Math.abs(omegaRps) > 2.0) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
         return;
@@ -81,7 +108,11 @@ public class VisionSubsystem extends SubsystemBase {
         {
           bValid = false;
         }
-//TODO fixme        m_commandSwerveDrivetrain.updateOdometry(mt2.pose, bValid, mt2.timestampSeconds,mt2.tagCount, mt2.avgTagDist);
+        else
+        {
+//          Logger.recordOutput("Vision/PoseBack", mt2.pose );
+          m_commandSwerveDrivetrain.updateOdometry(mt2.pose, bValid, mt2.timestampSeconds,mt2.tagCount, mt2.avgTagDist);
+        }
       }
 
       if( bValid == false )
@@ -94,9 +125,32 @@ public class VisionSubsystem extends SubsystemBase {
           {
             bValid = false;
           }
-//TODO fixme          m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
+          else
+          {
+//            Logger.recordOutput("Vision/PoseLeft", mtCam2.pose );
+            m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
+          }
         }
       }
+
+      if( bValid == false )
+      {
+        bValid = true;
+        LimelightHelpers.PoseEstimate mtCam2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
+        if( mtCam2 != null )
+        {
+          if(mtCam2.tagCount != 1)
+          {
+            bValid = false;
+          }
+          else
+          {
+//            Logger.recordOutput("Vision/PoseRight", mtCam2.pose );
+            m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
+          }
+        }
+      }
+
   }
 
   public boolean isInsideField(CommandSwerveDrivetrain commandSwerveDrivetrain) {
@@ -127,10 +181,18 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void limelightSlow( boolean slow )
   {
-    //!*!*!* TODO fixme if( slow )
-      //!*!*!* TODO fixme ThrottleSlow.throttleSlow( 60 );
-    //!*!*!* TODO fixme else
-      //!*!*!* TODO fixme ThrottleSlow.throttleSlow( 60 );
+    if( slow )
+    {
+      LimelightHelpers.SetThrottle("limelight-back", 100);
+      LimelightHelpers.SetThrottle("limelight-left", 100);
+      LimelightHelpers.SetThrottle("limelight-right", 100);
+    }
+    else
+    {
+      LimelightHelpers.SetThrottle("limelight-back", 0);
+      LimelightHelpers.SetThrottle("limelight-left", 0);
+      LimelightHelpers.SetThrottle("limelight-right", 0);
+    }
   }
 
   public RawFiducial getClosestFiducial() {

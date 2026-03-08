@@ -206,14 +206,17 @@ public class Intake extends SubsystemBase {
         return rollerCommandPercent;
     }
     
+    boolean upDownLimitPrevious = true;
+
     @Override
     public void periodic() {
 
         boolean upDownLimit = upDownLimitSwitch.get();
-        if( upDownLimit == false )
+        if( upDownLimit == false && (upDownLimit != upDownLimitPrevious) )
         {
             upDownMotor.setPosition(Constants.Intake.upDownPositionDown);
         }
+        upDownLimitPrevious = upDownLimit;
         Logger.recordOutput("Intake/UpDownPosition", upDownMotor.getPosition().getValueAsDouble() );
         Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/upDownLimitSwitch", upDownLimit );

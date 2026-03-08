@@ -90,7 +90,8 @@ public class RobotContainer {
         NamedCommands.registerCommand("cmdWait4", Commands.waitSeconds(4.0));
         NamedCommands.registerCommand("IntakeLower", IntakeLower());
         NamedCommands.registerCommand("RollerStop", RollerStop());
-        NamedCommands.registerCommand("ShootShort", ShootShort());
+        NamedCommands.registerCommand("ShootShortSpinup", ShootShortSpinup());
+        NamedCommands.registerCommand("Shoot", Shoot());
     }
 
     private Command IntakeLower()
@@ -108,11 +109,9 @@ public class RobotContainer {
             Commands.runOnce( ()->m_Intake.setRollerCommandPercent(0) );
     }
 
-    private Command ShootShort()
+    private Command ShootShortSpinup()
     {
-        return Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedPointBlank, Constants.Shooter.shooterAnglePositionMin ))
-            .andThen( Shoot() );
-
+        return Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedPointBlank, Constants.Shooter.shooterAnglePositionMin ));
     }
 
     private Command Shoot()
@@ -123,7 +122,7 @@ public class RobotContainer {
         .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
         .andThen(Commands.waitSeconds(1.0))
         .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-Constants.Intake.rollersPercentMax)))
-        .andThen(Commands.waitSeconds(1.5))
+        .andThen(Commands.waitSeconds(3.5))
         .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-0.3)))
         .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ))
         .andThen(Commands.waitSeconds(10.0));
