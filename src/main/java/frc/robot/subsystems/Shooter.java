@@ -62,15 +62,15 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Shooter/ShooterLeftSpeed", 0.0 );
         Logger.recordOutput("Shooter/ShooterRightSpeed", 0.0);
         Logger.recordOutput("Shooter/ShooterSetPoint", 0.0 );
-        Logger.recordOutput("Shooter/ShooterRightCurrent", 0.0 );
-        Logger.recordOutput("Shooter/ShooterLeftCurrent", 0.0 );
+//        Logger.recordOutput("Shooter/ShooterRightCurrent", 0.0 );
+//        Logger.recordOutput("Shooter/ShooterLeftCurrent", 0.0 );
         Logger.recordOutput("Shooter/KickerSpeed", 0.0 );
         Logger.recordOutput("Shooter/KickerSetPoint", 0.0 );
-        Logger.recordOutput("Shooter/KickerCurrent", 0.0 );
+//        Logger.recordOutput("Shooter/KickerCurrent", 0.0 );
         Logger.recordOutput("Shooter/AnglePosition", 0.0 );
         Logger.recordOutput("Shooter/AngleSetPoint", 0.0 );
         Logger.recordOutput("Shooter/AngleOutput", 0.0 );
-        Logger.recordOutput("Shooter/AngleCurrent", 0.0 );
+//        Logger.recordOutput("Shooter/AngleCurrent", 0.0 );
         Logger.recordOutput("Shooter/AngleEncoder", 0.0 );
 
         SmartDashboard.putData(this);
@@ -80,12 +80,12 @@ public class Shooter extends SubsystemBase {
     public void periodic() {
         Logger.recordOutput("Shooter/ShooterLeftSpeed", leftShooterMotor.getVelocity().getValue() );
         Logger.recordOutput("Shooter/ShooterRightSpeed", rightShooterMotor.getVelocity().getValue() );
-        Logger.recordOutput("Shooter/ShooterRightCurrent", rightShooterMotor.getTorqueCurrent().getValueAsDouble() );
-        Logger.recordOutput("Shooter/ShooterLeftCurrent", leftShooterMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Shooter/ShooterRightCurrent", rightShooterMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Shooter/ShooterLeftCurrent", leftShooterMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Shooter/KickerSpeed", kickerMotor.getVelocity().getValue() );
-        Logger.recordOutput("Shooter/KickerCurrent", kickerMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Shooter/KickerCurrent", kickerMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Shooter/AnglePosition", angleMotor.getPosition().getValue() );
-        Logger.recordOutput("Shooter/AngleCurrent", angleMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Shooter/AngleCurrent", angleMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Shooter/AngleEncoder", angleCancoder.getPosition().getValueAsDouble() );
 
         super.periodic();

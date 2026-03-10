@@ -6,6 +6,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -14,7 +15,9 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -130,16 +133,9 @@ public class RobotContainer {
 
     private double deadBandLeftX() {
         double newValue = joystick.getLeftX();
-        if ((newValue <= 0.08) && (newValue >= -0.08))
+        if ((newValue <= 0.10) && (newValue >= -0.10))
         {
-            if( autoAimPressed )
-            {
-                return 0.0; // TODO: turn based on the Limelight angle!
-            }
-            else
-            {
-                return 0.0;
-            }
+            return 0.0;
         }
         else if (newValue < 0) 
         {
@@ -154,7 +150,32 @@ public class RobotContainer {
 
     private double deadBandRightX() {
         double newValue = joystick.getRightX();
-        if ((newValue <= 0.08) && (newValue >= -0.08))
+        if(autoAimPressed)
+        {
+            Pose2d robotPose = drivetrain.getState().Pose;
+            Translation2d target = new Translation2d(11.90, 4.02);
+            Translation2d toTarget = target.minus(robotPose.getTranslation());
+            Rotation2d aimAngle = new Rotation2d(Math.atan2(
+                toTarget.getY(),
+                toTarget.getX()
+            ));
+            Rotation2d currentAngle = robotPose.getRotation().plus(Rotation2d.k180deg);
+            Rotation2d neededTurn = aimAngle.minus(currentAngle);
+            double degrees = -neededTurn.getDegrees();
+
+            // ignore anything crazy
+            if( (degrees < -90) || (degrees > 90))
+                newValue = 0;
+            else
+            {
+                newValue = degrees/20.0;
+                if( newValue > 0.2 ) newValue = 0.2;
+                else if( newValue < -0.2 ) newValue = -0.2;
+            }
+
+            return newValue;
+        }
+        else if ((newValue <= 0.08) && (newValue >= -0.08))
         {
             return 0.0;
         }
@@ -184,17 +205,6 @@ public class RobotContainer {
             else
             {
                 return( Constants.Drive.bumpSpeed );
-            }
-        }
-        else if( pickupSpeedPressedDriver || pickupSpeedPressedOperator )
-        {
-            if( newValue < 0 )
-            {
-                return( -1 * Constants.Drive.pickupSpeed );
-            }
-            else
-            {
-                return( Constants.Drive.pickupSpeed );
             }
         }
         else if (newValue < 0) 
@@ -233,13 +243,22 @@ public class RobotContainer {
     private void PickupSpeedSet( boolean newval, boolean byOperator )
     {
         if( byOperator )
-        {
             pickupSpeedPressedOperator = newval;
-        }
         else
-        {
             pickupSpeedPressedDriver = newval;
-        }
+        
+        if( pickupSpeedPressedDriver || pickupSpeedPressedOperator )
+            MaxSpeed = Constants.Drive.pickupSpeed * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+        else
+            MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    }
+
+    private void SlowModeSet( boolean newval )
+    {
+        if( newval )
+            MaxSpeed = 1.0;
+        else
+            MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     }
 
     private void configureBindings() {
@@ -311,9 +330,8 @@ public class RobotContainer {
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        // Reset the field-centric heading on START button (below/left of controller power)
-        //joystick.start().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
-        joystick.start().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        // Reset the field-centric heading on BACK button (below/left of controller power)
+        joystick.back().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         // Make an X out of the swerve wheels
         joystick.x()
@@ -325,6 +343,12 @@ public class RobotContainer {
         joystick.rightBumper()
             .onTrue( Commands.runOnce( ()->PickupSpeedSet( true, false ) ) )
             .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, false )) );
+        joystick.axisGreaterThan(2, 0.5)
+            .onTrue( Commands.runOnce( ()->SlowModeSet(true) ) )
+            .onFalse( Commands.runOnce( ()->SlowModeSet(false)) ) ;
+        joystick.axisGreaterThan(3, 0.5)
+            .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
+            .onFalse( Commands.runOnce( ()->AutoAimSet(false)) ) ;
 
 
         // =========== OPERATOR JOYSTICK =============

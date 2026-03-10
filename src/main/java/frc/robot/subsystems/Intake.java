@@ -59,12 +59,12 @@ public class Intake extends SubsystemBase {
  
         // AdvantageKit inputs
         Logger.recordOutput("Intake/upDownPosition", 0.0 );
-        Logger.recordOutput("Intake/upDownCurrent", 0.0 );
+//        Logger.recordOutput("Intake/upDownCurrent", 0.0 );
         Logger.recordOutput("Intake/RollerInnerSpeed", 0.0 );
-        Logger.recordOutput("Intake/RollerInnerCurrent", 0.0 );
+//        Logger.recordOutput("Intake/RollerInnerCurrent", 0.0 );
         Logger.recordOutput("Intake/RollerOuterSpeed", 0.0 );
-        Logger.recordOutput("Intake/RollerOuterCurrent", 0.0 );
-        Logger.recordOutput("Intake/ConveyorCurrent", 0.0 );
+//        Logger.recordOutput("Intake/RollerOuterCurrent", 0.0 );
+//        Logger.recordOutput("Intake/ConveyorCurrent", 0.0 );
         Logger.recordOutput("Intake/ConveyorSetPoint", 0.0 );
         // AdvantageKit outputs
         Logger.recordOutput("Intake/upDownSetPoint", 0.0 );
@@ -218,14 +218,14 @@ public class Intake extends SubsystemBase {
         }
         upDownLimitPrevious = upDownLimit;
         Logger.recordOutput("Intake/UpDownPosition", upDownMotor.getPosition().getValueAsDouble() );
-        Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/upDownLimitSwitch", upDownLimit );
         Logger.recordOutput("Intake/RollerInnerSpeed", rollerInnerMotor.getVelocity().getValueAsDouble() );
-        Logger.recordOutput("Intake/RollerInnerCurrent", rollerInnerMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Intake/RollerInnerCurrent", rollerInnerMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/RollerOuterSpeed", rollerOuterMotor.getVelocity().getValueAsDouble() );
-        Logger.recordOutput("Intake/RollerOuterCurrent", rollerOuterMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Intake/RollerOuterCurrent", rollerOuterMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/ConveyorSpeed", conveyorMotor.getVelocity().getValueAsDouble() );
-        Logger.recordOutput("Intake/ConveyorCurrent", conveyorMotor.getTorqueCurrent().getValueAsDouble() );
+//        Logger.recordOutput("Intake/ConveyorCurrent", conveyorMotor.getTorqueCurrent().getValueAsDouble() );
 
         super.periodic();
     }
