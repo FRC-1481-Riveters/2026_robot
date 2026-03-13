@@ -43,6 +43,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
     private boolean fusionEnabled = true;
+    private Alliance m_allianceColor;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -277,6 +278,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         ? kRedAlliancePerspectiveRotation
                         : kBlueAlliancePerspectiveRotation
                 );
+                m_allianceColor = allianceColor;
                 m_hasAppliedOperatorPerspective = true;
             });
         }
@@ -341,7 +343,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
-    public void updateOdometry(Pose2d pose, boolean valid, double timestamp, int tagCount, double tagDistance)
+    public void updateOdometry(Pose2d pose, boolean valid, double timestamp)
     {
         double xyStds, radStds;
 
@@ -361,40 +363,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         xyStds  = 5.000;     // default: Limelight pose is not particularly trustworthy
         radStds = 999999;    // don't trust Limelight rotation
 
-        if( valid && fusionEnabled )
+        if( pose.getX() != 0 && pose.getY() != 0 )
         {
-            boolean bTooFar;
-            bTooFar = false;
-
-            // one or >= 3 targets detected - trust is low
-            if (tagCount != 2) 
-            {
-                xyStds  = 100.0;
-                bTooFar = true;
-            }
-            // target over 4m away - trust is low
-            else if (tagDistance > 4) {
-                xyStds  = 1.000;
-                bTooFar = false;
-            }
-            // target over 2m away - trust is medium
-            else if (tagDistance > 2) {
-                xyStds  = 0.500;
-                bTooFar = false;
-            }
-            // target close - trust is high
-            else if (tagDistance < 2) {
-                xyStds  = 0.300;
-            }
-
-            if( pose.getX() != 0 && pose.getY() != 0 && (bTooFar == false) )
-            {
-                this.setVisionMeasurementStdDevs(VecBuilder.fill(xyStds, xyStds, radStds));
-                this.addVisionMeasurement(pose, timestamp);
-            }
+            this.setVisionMeasurementStdDevs(VecBuilder.fill(xyStds, xyStds, radStds));
+            this.addVisionMeasurement(pose, timestamp);
         }
-
-
     }
 
     public void fusionDisable()
@@ -404,5 +377,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void fusionEnable()
     {
         fusionEnabled = true;
+    }
+
+    public Alliance getAlliance()
+    {
+        return m_allianceColor;
     }
 }

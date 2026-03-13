@@ -11,12 +11,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "IntakeLower"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "Intake center"
@@ -32,6 +26,12 @@
           "type": "path",
           "data": {
             "pathName": "Center to hub"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAim"
           }
         },
         {

@@ -26,12 +26,6 @@ public class VisionSubsystem extends SubsystemBase {
     LimelightHelpers.SetRobotOrientation("limelight-back", 0, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-left", 0, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-right", 0, 0, 0, 0, 0, 0);
-    //TODO: only do this hack when we're in E3
-    Pose2d poseTemp = new Pose2d(14.12, 3.88, new Rotation2d( 0 ) );
-    m_commandSwerveDrivetrain.resetPose( poseTemp );
-    Logger.recordOutput("Vision/PoseBack", poseTemp );
-    Logger.recordOutput("Vision/PoseLeft", poseTemp );
-    Logger.recordOutput("Vision/PoseRight", poseTemp );
   }
 
   public static class NoSuchTargetException extends RuntimeException {
@@ -70,9 +64,10 @@ public class VisionSubsystem extends SubsystemBase {
         0,
         -90
         );
+        // Configure each limelight AREA limit to: 0.3% min, 4.0% max
         LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
         LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {6});
+        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
     }
 
   @Override
@@ -90,9 +85,6 @@ public class VisionSubsystem extends SubsystemBase {
       if(Math.abs(omegaRps) > 2.0) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
         return;
 
-      boolean bValid;
-      bValid = true;
-
       /* Limelight tips:
       -- Start with SENSOR GAIN = 15
       -- Set FLICKER CORRECTION to 60 Hz
@@ -104,50 +96,30 @@ public class VisionSubsystem extends SubsystemBase {
       LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-back");
       if( mt2 != null )
       {
-        if(mt2.tagCount != 2)
-        {
-          bValid = false;
-        }
-        else
+        if(mt2.tagCount != 0)
         {
 //          Logger.recordOutput("Vision/PoseBack", mt2.pose );
-          m_commandSwerveDrivetrain.updateOdometry(mt2.pose, bValid, mt2.timestampSeconds,mt2.tagCount, mt2.avgTagDist);
+          m_commandSwerveDrivetrain.updateOdometry(mt2.pose, true, mt2.timestampSeconds);
         }
       }
 
-      if( bValid == false )
+      LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
+      if( mtCamLeft != null )
       {
-        bValid = true;
-        LimelightHelpers.PoseEstimate mtCam2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
-        if( mtCam2 != null )
+        if(mtCamLeft.tagCount != 0)
         {
-          if(mtCam2.tagCount != 2)
-          {
-            bValid = false;
-          }
-          else
-          {
-//            Logger.recordOutput("Vision/PoseLeft", mtCam2.pose );
-            m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
-          }
+//            Logger.recordOutput("Vision/PoseLeft", mtCamLeft.pose );
+          m_commandSwerveDrivetrain.updateOdometry(mtCamLeft.pose, true, mtCamLeft.timestampSeconds);
         }
       }
 
-      if( bValid == false )
+      LimelightHelpers.PoseEstimate mtCamRight = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
+      if( mtCamRight != null )
       {
-        bValid = true;
-        LimelightHelpers.PoseEstimate mtCam2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
-        if( mtCam2 != null )
+        if(mtCamRight.tagCount != 0)
         {
-          if(mtCam2.tagCount != 1)
-          {
-            bValid = false;
-          }
-          else
-          {
-//            Logger.recordOutput("Vision/PoseRight", mtCam2.pose );
-            m_commandSwerveDrivetrain.updateOdometry(mtCam2.pose, bValid, mtCam2.timestampSeconds, mtCam2.tagCount, mtCam2.avgTagDist);
-          }
+//            Logger.recordOutput("Vision/PoseRight", mtCamRight.pose );
+          m_commandSwerveDrivetrain.updateOdometry(mtCamRight.pose, true, mtCamRight.timestampSeconds);
         }
       }
 

@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.PointWheelsAt;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -26,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.generated.TunerConstants;
@@ -42,9 +44,10 @@ public class RobotContainer {
     private final SendableChooser<Command> autoChooser;
 
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); 
     private double shootingSpeed = 1800;
-
+    Translation2d hubPosition;
+    
     private final Telemetry logger = new Telemetry(MaxSpeed);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
@@ -60,6 +63,7 @@ public class RobotContainer {
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+    
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandXboxController operatorJoystick = new CommandXboxController(1);
@@ -95,13 +99,14 @@ public class RobotContainer {
         NamedCommands.registerCommand("RollerStop", RollerStop());
         NamedCommands.registerCommand("ShootShortSpinup", ShootShortSpinup());
         NamedCommands.registerCommand("Shoot", Shoot());
+        NamedCommands.registerCommand("AutoAim", AutoAim());
     }
 
     private Command IntakeLower()
     {
         return 
             Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown) )
-                .andThen( Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-Constants.Intake.rollersPercentMax * 0.5) ) )
+                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5) ) )
                 .andThen( Commands.waitSeconds(1.5))
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-Constants.Intake.rollersPercentMax) ) );
     }
@@ -131,6 +136,12 @@ public class RobotContainer {
         .andThen(Commands.waitSeconds(10.0));
     }
 
+    private Command AutoAim()
+    {
+        return Commands.runOnce( ()->AutoAimSet(true) ) 
+        .andThen(Commands.waitSeconds( 1.5) )
+        .andThen( Commands.runOnce( ()->AutoAimSet(false)) ) ;
+    }
     private double deadBandLeftX() {
         double newValue = joystick.getLeftX();
         if ((newValue <= 0.10) && (newValue >= -0.10))
@@ -153,8 +164,7 @@ public class RobotContainer {
         if(autoAimPressed)
         {
             Pose2d robotPose = drivetrain.getState().Pose;
-            Translation2d target = new Translation2d(11.90, 4.02);
-            Translation2d toTarget = target.minus(robotPose.getTranslation());
+            Translation2d toTarget = hubPosition.minus(robotPose.getTranslation());
             Rotation2d aimAngle = new Rotation2d(Math.atan2(
                 toTarget.getY(),
                 toTarget.getX()
@@ -255,10 +265,14 @@ public class RobotContainer {
 
     private void SlowModeSet( boolean newval )
     {
-        if( newval )
+        if( newval ){
             MaxSpeed = 1.0;
-        else
+            MaxAngularRate = RotationsPerSecond.of(0.15).in(RadiansPerSecond);
+        }
+        else{
             MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+            MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+        }
     }
 
     private void configureBindings() {
@@ -275,9 +289,6 @@ public class RobotContainer {
 
         // Intake will execute this command periodically when no other Intake command is scheduled
         m_Intake.setDefaultCommand( m_Intake.rollerRequest( ()->clipRollers() ) );
-
-        // Shooter will execute this command periodically when no other Shooter command is scheduled
-        //!*!*!* TODO: m_Shooter.setDefaultCommand( m_Shooter.angleRequest( ()->clipRollers() ) );
 
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
@@ -351,6 +362,9 @@ public class RobotContainer {
             .onFalse( Commands.runOnce( ()->AutoAimSet(false)) ) ;
 
 
+
+
+
         // =========== OPERATOR JOYSTICK =============
         // =========== OPERATOR JOYSTICK =============
         // =========== OPERATOR JOYSTICK =============
@@ -362,14 +376,6 @@ public class RobotContainer {
         operatorJoystick.povDown()
             .onTrue( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
-       
-        operatorJoystick.povLeft()
-            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePosition( -16.5 )))
-            .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0))) ;
-
-        operatorJoystick.povRight()
-            .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePosition( -0.6 )))
-            .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0))) ;
 
         operatorJoystick.a()
             .onTrue(Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ))
@@ -410,6 +416,10 @@ public class RobotContainer {
     {
         double temp;
 
+        if( Math.abs(operatorJoystick.getRightY()) > 0.2)
+        {
+            m_Intake.setRollerCommandPercent(0);
+        }
         temp = m_Intake.getRollerCommandPercent();
         if( temp == 0.0 )
         {
@@ -443,5 +453,23 @@ public class RobotContainer {
             System.out.println("Using auton path " + name);
         }
         return command;
+    }
+
+    public void setHubPosition()
+    {
+        if( drivetrain.getAlliance() == Alliance.Red )
+        {
+            hubPosition = new Translation2d(11.90, 4.02);
+        }
+        else
+        {
+            hubPosition = new Translation2d(4.61, 4.02);
+        }
+
+    }
+
+    private Rotation2d getPossumAngle()
+    {
+        return Rotation2d.k180deg;
     }
 }
