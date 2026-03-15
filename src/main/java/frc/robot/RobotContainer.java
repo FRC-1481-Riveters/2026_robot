@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Set;
+
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -26,6 +28,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -73,7 +76,10 @@ public class RobotContainer {
     private boolean bumpSpeedPressedDriver = false;
     private boolean pickupSpeedPressedOperator = false;
     private boolean pickupSpeedPressedDriver = false;
+
     private boolean bAutoAimDone = false;
+    private Rotation2d autoAimAngle;
+    private double autoAimDegrees = 999.0;
 
 
     public RobotContainer() {
@@ -101,7 +107,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("RollerStop", RollerStop());
         NamedCommands.registerCommand("ShootShortSpinup", ShootShortSpinup());
         NamedCommands.registerCommand("Shoot", Shoot());
-        NamedCommands.registerCommand("AutoAim", AutoAim());
+        NamedCommands.registerCommand("AutoAim", DeferredAutoAim());
         NamedCommands.registerCommand("AutoShooter", Commands.runOnce( ()->autoShooterRPM()) );
     }
 
@@ -141,12 +147,38 @@ public class RobotContainer {
         .andThen(ShooterStop());
     }
 
+    private DeferredCommand DeferredAutoAim()
+    {
+        return (new DeferredCommand(() -> AutoAimAuton(), Set.of(drivetrain)));
+    }
+
+    private Command AutoAimAuton()
+    {
+        return Commands.runOnce( ()->AutoAimClear() )
+            .andThen( drivetrain.applyRequest(() ->
+                drive.withVelocityX( 0 ) // Drive forward/backward
+                    .withVelocityY( 0 )  // Drive left/right
+                    .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
+            ) 
+        )
+        .until( this::AutoAimDone )
+        .andThen( drivetrain.applyRequest(() ->
+            drive.withVelocityX( 0 ) // Drive forward/backward
+                .withVelocityY( 0 )  // Drive left/right
+                .withRotationalRate( 0 ) // Positive = counterclockwise
+            )
+            .withTimeout( 0.05 )
+        );
+    }
+
     private Command AutoAim()
     {
-        return drivetrain.applyRequest(() ->
-            drive.withVelocityX( -deadBandLeftY() * MaxSpeed ) // Drive forward/backward
-                .withVelocityY( -deadBandLeftX() * MaxSpeed )  // Drive left/right
-                .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
+        return Commands.runOnce( ()->AutoAimClear() )
+            .andThen( drivetrain.applyRequest(() ->
+                drive.withVelocityX( -deadBandLeftY() * MaxSpeed ) // Drive forward/backward
+                    .withVelocityY( -deadBandLeftX() * MaxSpeed )  // Drive left/right
+                    .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
+            ) 
         )
         .until( this::AutoAimDone );
     }
@@ -519,9 +551,6 @@ public class RobotContainer {
         CommandScheduler.getInstance().schedule( ShooterStop() );
     }
 
-    private Rotation2d autoAimAngle;
-    double autoAimDegrees = 999.0;
-
     private double AutoAimCalculate()
     {
         double newValue;
@@ -533,7 +562,7 @@ public class RobotContainer {
         ));
         Rotation2d currentAngle = robotPose.getRotation().plus(Rotation2d.k180deg);
         Rotation2d neededTurn = autoAimAngle.minus(currentAngle);
-        autoAimDegrees = -neededTurn.getDegrees();
+        autoAimDegrees = neededTurn.getDegrees();
 
         // ignore anything crazy
         if( (autoAimDegrees < -90) || (autoAimDegrees > 90))
@@ -541,12 +570,12 @@ public class RobotContainer {
         else
         {
             newValue = autoAimDegrees/20.0;
-            if( newValue > 0.2 ) newValue = 0.2;
-            else if( newValue < -0.2 ) newValue = -0.2;
+            if( newValue > 0.15 ) newValue = 0.15;
+            else if( newValue < -0.15 ) newValue = -0.15;
         }
         newValue = newValue * MaxAngularRate;
 
-        if( autoAimDegrees < 3.0 )
+        if( Math.abs(autoAimDegrees) < 3.0 )
         {
             bAutoAimDone = true;
         }
@@ -554,7 +583,8 @@ public class RobotContainer {
         {
             bAutoAimDone = false;
         }
-        Logger.recordOutput( "Shooter/AutoAimDone", false );
+        Logger.recordOutput( "Shooter/AutoAimDone", bAutoAimDone );
+        Logger.recordOutput( "Shooter/AutoAimDegrees", autoAimDegrees );
 
         return newValue;
     }

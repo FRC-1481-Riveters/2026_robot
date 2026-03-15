@@ -78,9 +78,10 @@ public class VisionSubsystem extends SubsystemBase {
         see:
         https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2#using-the-internal-imu-with-megatag2
         */
-        LimelightHelpers.SetIMUMode("limelight-back", 4 );
-        LimelightHelpers.SetIMUMode("limelight-left", 4 );
-        LimelightHelpers.SetIMUMode("limelight-right", 4 );
+        // DOES NOT WORK GOOD setting this to 4
+        LimelightHelpers.SetIMUMode("limelight-back", 0 );
+        LimelightHelpers.SetIMUMode("limelight-left", 0 );
+        LimelightHelpers.SetIMUMode("limelight-right", 0 );
     }
 
   @Override
