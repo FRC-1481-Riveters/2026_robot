@@ -44,6 +44,10 @@ public class Shooter extends SubsystemBase {
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
     private final CANcoder angleCancoder;
+    private double shooterSetpoint = 0;
+    private double shooterSetpointPrevious = 0;
+    private int debounceCounter = 0;
+    private boolean shooterSpeedSteady = false;
     
     public Shooter() {
         leftShooterMotor = new TalonFX(Constants.CAN_motor_shooter_left);
@@ -87,6 +91,29 @@ public class Shooter extends SubsystemBase {
         Logger.recordOutput("Shooter/AnglePosition", angleMotor.getPosition().getValue() );
 //        Logger.recordOutput("Shooter/AngleCurrent", angleMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Shooter/AngleEncoder", angleCancoder.getPosition().getValueAsDouble() );
+
+        boolean shooterSpeedInRange;
+        
+        shooterSpeedInRange = motors.stream().allMatch(motor -> {
+            final boolean isInVelocityMode = motor.getAppliedControl().equals(velocityRequest);
+            final AngularVelocity currentVelocity = motor.getVelocity().getValue();
+            final AngularVelocity targetVelocity = velocityRequest.getVelocityMeasure();
+            return isInVelocityMode && currentVelocity.isNear(targetVelocity, kVelocityTolerance);
+        });
+
+        if( shooterSpeedInRange == false )
+        {
+            debounceCounter = 0;
+            shooterSpeedSteady = false;
+        }
+        else
+        {
+            ++debounceCounter;
+            if( debounceCounter > (1500/50) )
+            {
+                shooterSpeedSteady = true;
+            }
+        }
 
         super.periodic();
     }
@@ -183,6 +210,7 @@ public class Shooter extends SubsystemBase {
                     .withVelocity(RPM.of(rpm))
             );
         }
+        shooterSetpoint = rpm;
         Logger.recordOutput("Shooter/ShooterSetPoint", rpm);
         System.out.println("setShooterRPM " + rpm);
     }
@@ -225,12 +253,8 @@ public class Shooter extends SubsystemBase {
     }
 
 
-    public boolean isVelocityWithinTolerance() {
-        return motors.stream().allMatch(motor -> {
-            final boolean isInVelocityMode = motor.getAppliedControl().equals(velocityRequest);
-            final AngularVelocity currentVelocity = motor.getVelocity().getValue();
-            final AngularVelocity targetVelocity = velocityRequest.getVelocityMeasure();
-            return isInVelocityMode && currentVelocity.isNear(targetVelocity, kVelocityTolerance);
-        });
+    public boolean isVelocityWithinTolerance() 
+    {
+        return shooterSpeedSteady;
     }
 }
