@@ -142,8 +142,8 @@ public class RobotContainer {
     private Command AutoAim()
     {
         return drivetrain.applyRequest(() ->
-            drive.withVelocityX(0) // Drive forward/backward
-                .withVelocityY(0)  // Drive left/right
+            drive.withVelocityX( -deadBandLeftY() * MaxSpeed ) // Drive forward/backward
+                .withVelocityY( -deadBandLeftX() * MaxSpeed )  // Drive left/right
                 .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
         )
         .until( this::AutoAimDone )
