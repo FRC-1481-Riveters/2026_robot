@@ -147,7 +147,11 @@ public class RobotContainer {
                 .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
         )
         .until( this::AutoAimDone )
-        .withTimeout( 2.0 );
+        .withTimeout( 2.0 )
+        .andThen( drivetrain.applyRequest(() ->
+            drive.withVelocityX(0) // Drive forward/backward
+                .withVelocityY(0)  // Drive left/right
+                .withRotationalRate( 0 ) ) );
     }
 
     private Command ShooterStop()
