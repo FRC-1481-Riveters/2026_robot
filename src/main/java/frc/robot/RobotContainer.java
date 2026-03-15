@@ -73,6 +73,8 @@ public class RobotContainer {
     private boolean bumpSpeedPressedDriver = false;
     private boolean pickupSpeedPressedOperator = false;
     private boolean pickupSpeedPressedDriver = false;
+    private boolean bAutoAimDone = false;
+
 
     public RobotContainer() {
         setupNamedCommands();
@@ -153,6 +155,7 @@ public class RobotContainer {
     {
         return Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
         .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0)))
+        .andThen(Commands.runOnce( ()->AutoAimClear() ) )
         .andThen(Commands.waitSeconds(0.25))
         .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
         .andThen(Commands.waitSeconds(0.25))
@@ -517,7 +520,7 @@ public class RobotContainer {
     }
 
     private Rotation2d autoAimAngle;
-    double autoAimDegrees;
+    double autoAimDegrees = 999.0;
 
     private double AutoAimCalculate()
     {
@@ -542,18 +545,28 @@ public class RobotContainer {
             else if( newValue < -0.2 ) newValue = -0.2;
         }
         newValue = newValue * MaxAngularRate;
+
+        if( autoAimDegrees < 3.0 )
+        {
+            bAutoAimDone = true;
+        }
+        else
+        {
+            bAutoAimDone = false;
+        }
+        Logger.recordOutput( "Shooter/AutoAimDone", false );
+
         return newValue;
     }
 
     private boolean AutoAimDone()
     {
-        boolean retval;
+        return bAutoAimDone;
+    }
 
-        if( autoAimDegrees < 3.0 )
-            retval = true;
-        else
-            retval = false;
-        return retval;
+    private void AutoAimClear()
+    {
+        bAutoAimDone = false;
     }
 
     private Rotation2d getPossumAngle()

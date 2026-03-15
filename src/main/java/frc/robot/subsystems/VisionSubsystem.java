@@ -23,9 +23,14 @@ public class VisionSubsystem extends SubsystemBase {
     m_commandSwerveDrivetrain = commandSwerveDrivetrain;
     config();
     tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);    
-    LimelightHelpers.SetRobotOrientation("limelight-back", 0, 0, 0, 0, 0, 0);
-    LimelightHelpers.SetRobotOrientation("limelight-left", 0, 0, 0, 0, 0, 0);
-    LimelightHelpers.SetRobotOrientation("limelight-right", 0, 0, 0, 0, 0, 0);
+
+    var driveState = m_commandSwerveDrivetrain.getState();
+    double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
+
+    double headingDegrees = driveState.Pose.getRotation().getDegrees();
+    LimelightHelpers.SetRobotOrientation("limelight-back", headingDegrees, 0, 0, 0, 0, 0);
+    LimelightHelpers.SetRobotOrientation("limelight-left", headingDegrees, 0, 0, 0, 0, 0);
+    LimelightHelpers.SetRobotOrientation("limelight-right", headingDegrees, 0, 0, 0, 0, 0);
   }
 
   public static class NoSuchTargetException extends RuntimeException {
@@ -64,10 +69,18 @@ public class VisionSubsystem extends SubsystemBase {
         0,
         -90
         );
-        // Configure each limelight AREA limit to: 0.3% min, 4.0% max
+        // Configure each limelight AREA limit to: 0.1% min, 4.0% max
         LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
         LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
         LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+        /*
+        Use the Limelight's internal IMU in addition to the swerve subsystem's Pigeon IMU
+        see:
+        https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2#using-the-internal-imu-with-megatag2
+        */
+        LimelightHelpers.SetIMUMode("limelight-back", 4 );
+        LimelightHelpers.SetIMUMode("limelight-left", 4 );
+        LimelightHelpers.SetIMUMode("limelight-right", 4 );
     }
 
   @Override
