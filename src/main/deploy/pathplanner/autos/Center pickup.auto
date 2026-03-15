@@ -11,9 +11,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Intake center"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Intake center"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeLower"
+                }
+              }
+            ]
           }
         },
         {
@@ -26,6 +39,18 @@
           "type": "path",
           "data": {
             "pathName": "Center to hub"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RollerStop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoShooter"
           }
         },
         {

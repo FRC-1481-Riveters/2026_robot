@@ -103,23 +103,28 @@ public class VisionSubsystem extends SubsystemBase {
         }
       }
 
-      LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
-      if( mtCamLeft != null )
+      // Ignore side Limelights if we are going over the BUMP
+      double roll = m_commandSwerveDrivetrain.getPigeon2().getRoll().getValueAsDouble();
+      if( Math.abs(roll) < 3.0 )
       {
-        if(mtCamLeft.tagCount != 0)
+        LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
+        if( mtCamLeft != null )
         {
-//            Logger.recordOutput("Vision/PoseLeft", mtCamLeft.pose );
-          m_commandSwerveDrivetrain.updateOdometry(mtCamLeft.pose, true, mtCamLeft.timestampSeconds);
+          if(mtCamLeft.tagCount != 0)
+          {
+  //            Logger.recordOutput("Vision/PoseLeft", mtCamLeft.pose );
+            m_commandSwerveDrivetrain.updateOdometry(mtCamLeft.pose, true, mtCamLeft.timestampSeconds);
+          }
         }
-      }
 
-      LimelightHelpers.PoseEstimate mtCamRight = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
-      if( mtCamRight != null )
-      {
-        if(mtCamRight.tagCount != 0)
+        LimelightHelpers.PoseEstimate mtCamRight = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
+        if( mtCamRight != null )
         {
-//            Logger.recordOutput("Vision/PoseRight", mtCamRight.pose );
-          m_commandSwerveDrivetrain.updateOdometry(mtCamRight.pose, true, mtCamRight.timestampSeconds);
+          if(mtCamRight.tagCount != 0)
+          {
+  //            Logger.recordOutput("Vision/PoseRight", mtCamRight.pose );
+            m_commandSwerveDrivetrain.updateOdometry(mtCamRight.pose, true, mtCamRight.timestampSeconds);
+          }
         }
       }
 

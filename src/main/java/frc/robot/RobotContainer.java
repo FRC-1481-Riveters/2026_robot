@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.PointWheelsAt;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -23,6 +24,7 @@ import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -34,7 +36,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
-
 
 
 
@@ -99,28 +100,31 @@ public class RobotContainer {
         NamedCommands.registerCommand("RollerStop", RollerStop());
         NamedCommands.registerCommand("ShootShortSpinup", ShootShortSpinup());
         NamedCommands.registerCommand("Shoot", Shoot());
-        NamedCommands.registerCommand("AutoAim", AutoAim());
+        NamedCommands.registerCommand("AutoAim", Commands.waitSeconds(1));
+        NamedCommands.registerCommand("AutoShooter", Commands.runOnce( ()->autoShooterRPM()) );
     }
 
     private Command IntakeLower()
     {
         return 
-            Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown) )
+            Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake )
+                .andThen( Commands.waitSeconds(0.5))
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5) ) )
                 .andThen( Commands.waitSeconds(1.5))
-                .andThen( Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-Constants.Intake.rollersPercentMax) ) );
+                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) )
+                .andThen( Commands.waitSeconds(0.5));
     }
 
     private Command RollerStop()
     {
         return 
-            Commands.runOnce( ()->m_Intake.setRollerCommandPercent(0) );
+            Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0) );
     }
 
     private Command ShootShortSpinup()
     {
         return Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedPointBlank, Constants.Shooter.shooterAnglePositionMin ));
-    }
+        }
 
     private Command Shoot()
     {
@@ -129,19 +133,23 @@ public class RobotContainer {
         .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(kickerSpeed.get())) )
         .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
         .andThen(Commands.waitSeconds(1.0))
-        .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-Constants.Intake.rollersPercentMax)))
+        .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax)))
         .andThen(Commands.waitSeconds(3.5))
-        .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(-0.3)))
         .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ))
-        .andThen(Commands.waitSeconds(10.0));
+        .andThen(Commands.waitSeconds(10.0))
+        .andThen(ShooterStop());
     }
 
-    private Command AutoAim()
+    private Command ShooterStop()
     {
-        return Commands.runOnce( ()->AutoAimSet(true) ) 
-        .andThen(Commands.waitSeconds( 1.5) )
-        .andThen( Commands.runOnce( ()->AutoAimSet(false)) ) ;
+        return Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
+        .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0)))
+        .andThen(Commands.waitSeconds(0.25))
+        .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
+        .andThen(Commands.waitSeconds(0.25))
+        .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ) );
     }
+
     private double deadBandLeftX() {
         double newValue = joystick.getLeftX();
         if ((newValue <= 0.10) && (newValue >= -0.10))
@@ -200,6 +208,72 @@ public class RobotContainer {
 
     }
 
+    private void autoShooterRPM()
+    {
+        Pose2d robotPose = drivetrain.getState().Pose;
+        double distance = robotPose.getTranslation().getDistance(hubPosition);
+        double angle;
+        double speed;
+        double percent=0;
+
+        /*
+        1.76 30 inches
+        2.87 tower front
+        3.94 tower back
+        3.56trench
+        5.25corner
+        */
+        if( distance < 1.76 )
+        {
+            angle = Constants.Shooter.shooterAnglePositionMin;
+            speed = Constants.Shooter.shootSpeedPointBlank;
+        }
+        else if( distance < 2.87 )
+        {
+            percent = (distance - 1.76) / (2.87 - 1.76);
+            angle = 
+                Constants.Shooter.shooterAnglePositionMin + 
+                (percent * (Constants.Shooter.shooterAnglePositionTower - Constants.Shooter.shooterAnglePositionMin));
+            speed =
+                Constants.Shooter.shootSpeedPointBlank + 
+                (percent * (Constants.Shooter.shootSpeedTowerFront - Constants.Shooter.shootSpeedPointBlank));
+        }
+        else if( distance < 3.56 )
+        {
+            percent = (distance - 2.87) / (3.56 - 2.87);
+            angle = Constants.Shooter.shooterAnglePositionTower;
+            speed =
+                Constants.Shooter.shootSpeedTowerFront + 
+                (percent * (Constants.Shooter.shootSpeedTrench - Constants.Shooter.shootSpeedTowerFront));
+        }
+        else if( distance < 3.94 )
+        {
+            percent = (distance - 2.87) / (3.56 - 2.87);
+            angle = Constants.Shooter.shooterAnglePositionTower;
+            speed =
+                Constants.Shooter.shootSpeedTrench + 
+                (percent * (Constants.Shooter.shootSpeedTowerBack - Constants.Shooter.shootSpeedTrench));
+        }
+        else if( distance < 5.25 )
+        {
+            percent = (distance - 3.56) / (5.25 - 3.56);
+            angle = 
+                Constants.Shooter.shooterAnglePositionTower + 
+                (percent * (Constants.Shooter.shooterAnglePositionMax - Constants.Shooter.shooterAnglePositionTower));
+            speed =
+                Constants.Shooter.shootSpeedTrench + 
+                (percent * (Constants.Shooter.shootSpeedCorner - Constants.Shooter.shootSpeedTowerBack));
+        }
+        else
+        {
+            // bigger
+            angle = Constants.Shooter.shooterAnglePositionMax;
+            speed = Constants.Shooter.shootSpeedCorner;
+        }
+        System.out.println("autoShooterRPM: distance=" + distance + " percent=" + percent + " angle=" + angle + " speed=" + speed);
+        setShooter( speed, angle );
+    }
+
     private double deadBandLeftY() {
         double newValue = joystick.getLeftY();
         if ((newValue <= 0.08) && (newValue >= -0.08))
@@ -235,6 +309,7 @@ public class RobotContainer {
 
     private void AutoAimSet( boolean newval )
     {
+        System.out.println("AutoAimSet: " + newval);
         autoAimPressed = newval;
     }
 
@@ -287,9 +362,6 @@ public class RobotContainer {
             )                    
         );
 
-        // Intake will execute this command periodically when no other Intake command is scheduled
-        m_Intake.setDefaultCommand( m_Intake.rollerRequest( ()->clipRollers() ) );
-
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
             .onFalse( Commands.runOnce( ()->AutoAimSet(false) ) ) ;
@@ -307,14 +379,8 @@ public class RobotContainer {
                 Shoot()
             )
             .onFalse(
-                Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
-                .andThen(Commands.runOnce( ()->m_Intake.setRollerCommandPercent(0)))
-                .andThen(Commands.waitSeconds(0.25))
-                .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
-                .andThen(Commands.waitSeconds(0.25))
-                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )
-            )
-        );
+                ShooterStop()
+            );
 
         joystick.b().whileTrue(drivetrain.applyRequest(() ->
             point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
@@ -336,10 +402,12 @@ public class RobotContainer {
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
+        /*
         joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        */
 
         // Reset the field-centric heading on BACK button (below/left of controller power)
         joystick.back().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
@@ -378,8 +446,7 @@ public class RobotContainer {
             .onFalse( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0) ) );
 
         operatorJoystick.a()
-            .onTrue(Commands.runOnce( ()->m_Shooter.setShooterRPM(Constants.Shooter.shootSpeed) ))
-            .onFalse(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ));
+            .onTrue(Commands.runOnce( ()->autoShooterRPM() ));
         
         operatorJoystick.x()
             .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedPointBlank, Constants.Shooter.shooterAnglePositionMin )));
@@ -397,6 +464,24 @@ public class RobotContainer {
             .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(-0.5) ) )
             .onFalse( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0) ) );
 
+        operatorJoystick.axisLessThan(5,-0.2)
+        .and(operatorJoystick.axisGreaterThan(5,-0.9))
+            .whileTrue( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5)) )
+            .onFalse( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0) ) );
+
+        operatorJoystick.axisLessThan(5,-0.9)
+            .whileTrue( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax)) )
+            .onFalse( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0) ) );
+
+        operatorJoystick.axisGreaterThan(5,0.2)
+        .and(operatorJoystick.axisLessThan(5,0.9))
+            .whileTrue( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(Constants.Intake.rollersPercentMax * 0.5)) )
+            .onFalse( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0) ) );
+
+        operatorJoystick.axisGreaterThan(5,0.9)
+            .whileTrue( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(Constants.Intake.rollersPercentMax)) )
+            .onFalse( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0) ) );
+
         operatorJoystick.leftBumper()
             .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, true ) ) )
             .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, true )) );
@@ -410,28 +495,6 @@ public class RobotContainer {
         shootingSpeed = speed;
         m_Shooter.setAnglePosition( angle );
         m_Shooter.setShooterRPM(shootingSpeed);
-    }
-
-    public double clipRollers()
-    {
-        double temp;
-
-        if( Math.abs(operatorJoystick.getRightY()) > 0.2)
-        {
-            m_Intake.setRollerCommandPercent(0);
-        }
-        temp = m_Intake.getRollerCommandPercent();
-        if( temp == 0.0 )
-        {
-            temp = operatorJoystick.getRightY();
-            if (temp > Constants.Intake.rollersPercentMax) {
-                temp = Constants.Intake.rollersPercentMax;
-            }
-            else if (temp < -Constants.Intake.rollersPercentMax) {
-                temp = -Constants.Intake.rollersPercentMax;
-            }
-        }
-        return temp;
     }
 
     public Command getAutonomousCommand() {
@@ -466,6 +529,14 @@ public class RobotContainer {
             hubPosition = new Translation2d(4.61, 4.02);
         }
 
+    }
+
+    public void stopControls()
+    {
+        m_Intake.setRollerPercentOutput(0);
+        m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown);
+        AutoAimSet(false); 
+        CommandScheduler.getInstance().schedule( ShooterStop() );
     }
 
     private Rotation2d getPossumAngle()

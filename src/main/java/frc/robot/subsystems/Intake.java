@@ -41,7 +41,6 @@ public class Intake extends SubsystemBase {
     private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
     private final DigitalInput upDownLimitSwitch = new DigitalInput(0);
-    private double rollerCommandPercent;
 
     public Intake() {
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
@@ -134,6 +133,7 @@ public class Intake extends SubsystemBase {
     
     public void setRollerPercentOutput(double percentOutput) {
         double volts;
+        System.out.println("setRollerPercentOutput " + percentOutput);
         if( Math.abs(percentOutput) < 0.1 )
         {
             volts = 0;
@@ -150,14 +150,6 @@ public class Intake extends SubsystemBase {
         );
 
         Logger.recordOutput("Intake/RollerSetPoint", volts );
-
-        /*
-        else
-            rollerMotor.setControl(
-                velocityRequest
-                    .withVelocity(RPM.of(60 * percentOutput))
-            );
-        */
     }
 
     public void setConveyorPercentOutput(double percentOutput) {
@@ -187,25 +179,6 @@ public class Intake extends SubsystemBase {
         */
     }
 
-    // rollerRequest: this is the default command for the Intake Subsystem
-    // - that means it runs continuously until there's some other command
-    // - RobotContainer calls this by passing in a function that returns a joystick axis (a Supplier<Double>)
-    public Command rollerRequest(Supplier<Double> joystickAxisFunction)
-    {
-        return run( ()->setRollerPercentOutput(joystickAxisFunction.get()));        
-    }
-
-
-    public void setRollerCommandPercent( double percent )
-    {
-        rollerCommandPercent = percent;
-    }
-
-    public double getRollerCommandPercent() 
-    {
-        return rollerCommandPercent;
-    }
-    
     boolean upDownLimitPrevious = true;
 
     @Override

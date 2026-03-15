@@ -4,13 +4,18 @@
 
 package frc.robot;
 
+import java.lang.reflect.Field;
+
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -53,7 +58,18 @@ public class Robot extends LoggedRobot {
         // Start AdvantageKit logger
         Logger.start();
 
-        m_robotContainer = new RobotContainer();
+    // Adjust loop overrun warning timeout
+    try {
+      Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
+      watchdogField.setAccessible(true);
+      Watchdog watchdog = (Watchdog) watchdogField.get(this);
+      watchdog.setTimeout(Constants.loopPeriodWatchdogSecs);
+    } catch (Exception e) {
+      DriverStation.reportWarning("Failed to disable loop overrun warnings.", false);
+    }
+    CommandScheduler.getInstance().setPeriod(Constants.loopPeriodWatchdogSecs);
+
+    m_robotContainer = new RobotContainer();
         CameraServer.startAutomaticCapture();
     }
 
@@ -94,11 +110,9 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void teleopInit() {
-        m_robotContainer.setHubPosition();
-        if (m_autonomousCommand != null) {
-            CommandScheduler.getInstance().cancel(m_autonomousCommand);
-        }
         CommandScheduler.getInstance().cancelAll();
+        m_robotContainer.setHubPosition();
+        m_robotContainer.stopControls();
     }
 
     @Override

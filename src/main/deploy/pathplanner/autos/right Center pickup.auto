@@ -37,6 +37,12 @@
         {
           "type": "named",
           "data": {
+            "name": "AutoShooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "Shoot"
           }
         }
