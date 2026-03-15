@@ -206,21 +206,25 @@ public class RobotContainer {
         double speed;
         double percent=0;
 
+        double distance_30inch = 1.76;      // distance between robot center and hub with 30 inches between bumpers and hub base
+        double distance_tower_front = 2.87; // distance to hub when back of the robot is at the front of the tower
+        double distance_trench = 3.56;      // distance to hub when back of the robot is next to trench, back against the wall
+        double distance_tower_back = 3.94;  // distance to hub when back of the robot is at the alliance wall next to the tower
+        double distance_corner = 5.25;      // distance to hub when back of the robot is in either alliance corner
+
         /*
-        1.76 30 inches
-        2.87 tower front
-        3.94 tower back
-        3.56trench
-        5.25corner
+        Interpolate between these positions the hard way
+        - a real way would be to build an array of distance+angle+position and interpolate between
+        - but here we'll just do it the hard way with if-thens so it's easy to understand
         */
-        if( distance < 1.76 )
+        if( distance < distance_30inch )
         {
             angle = Constants.Shooter.shooterAnglePositionMin;
             speed = Constants.Shooter.shootSpeedPointBlank;
         }
-        else if( distance < 2.87 )
+        else if( distance < distance_tower_front )
         {
-            percent = (distance - 1.76) / (2.87 - 1.76);
+            percent = (distance - distance_30inch) / (distance_tower_front - distance_30inch);
             angle = 
                 Constants.Shooter.shooterAnglePositionMin + 
                 (percent * (Constants.Shooter.shooterAnglePositionTower - Constants.Shooter.shooterAnglePositionMin));
@@ -228,25 +232,25 @@ public class RobotContainer {
                 Constants.Shooter.shootSpeedPointBlank + 
                 (percent * (Constants.Shooter.shootSpeedTowerFront - Constants.Shooter.shootSpeedPointBlank));
         }
-        else if( distance < 3.56 )
+        else if( distance < distance_trench )
         {
-            percent = (distance - 2.87) / (3.56 - 2.87);
+            percent = (distance - distance_tower_front) / (distance_trench - distance_tower_front);
             angle = Constants.Shooter.shooterAnglePositionTower;
             speed =
                 Constants.Shooter.shootSpeedTowerFront + 
                 (percent * (Constants.Shooter.shootSpeedTrench - Constants.Shooter.shootSpeedTowerFront));
         }
-        else if( distance < 3.94 )
+        else if( distance < distance_tower_back )
         {
-            percent = (distance - 2.87) / (3.56 - 2.87);
+            percent = (distance - distance_trench) / (distance_tower_back - distance_trench);
             angle = Constants.Shooter.shooterAnglePositionTower;
             speed =
                 Constants.Shooter.shootSpeedTrench + 
                 (percent * (Constants.Shooter.shootSpeedTowerBack - Constants.Shooter.shootSpeedTrench));
         }
-        else if( distance < 5.25 )
+        else if( distance < distance_corner )
         {
-            percent = (distance - 3.56) / (5.25 - 3.56);
+            percent = (distance - distance_tower_back) / (distance_corner - distance_tower_back);
             angle = 
                 Constants.Shooter.shooterAnglePositionTower + 
                 (percent * (Constants.Shooter.shooterAnglePositionMax - Constants.Shooter.shooterAnglePositionTower));
