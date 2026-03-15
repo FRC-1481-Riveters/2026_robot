@@ -69,7 +69,6 @@ public class RobotContainer {
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandXboxController operatorJoystick = new CommandXboxController(1);
 
-    private boolean autoAimPressed = false;
     private boolean bumpSpeedPressedOperator = false;
     private boolean bumpSpeedPressedDriver = false;
     private boolean pickupSpeedPressedOperator = false;
@@ -100,7 +99,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("RollerStop", RollerStop());
         NamedCommands.registerCommand("ShootShortSpinup", ShootShortSpinup());
         NamedCommands.registerCommand("Shoot", Shoot());
-        NamedCommands.registerCommand("AutoAim", Commands.waitSeconds(1));
+        NamedCommands.registerCommand("AutoAim", AutoAim());
         NamedCommands.registerCommand("AutoShooter", Commands.runOnce( ()->autoShooterRPM()) );
     }
 
@@ -140,6 +139,17 @@ public class RobotContainer {
         .andThen(ShooterStop());
     }
 
+    private Command AutoAim()
+    {
+        return drivetrain.applyRequest(() ->
+            drive.withVelocityX(0) // Drive forward/backward
+                .withVelocityY(0)  // Drive left/right
+                .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
+        )
+        .until( this::AutoAimDone )
+        .withTimeout( 2.0 );
+    }
+
     private Command ShooterStop()
     {
         return Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
@@ -169,31 +179,7 @@ public class RobotContainer {
 
     private double deadBandRightX() {
         double newValue = joystick.getRightX();
-        if(autoAimPressed)
-        {
-            Pose2d robotPose = drivetrain.getState().Pose;
-            Translation2d toTarget = hubPosition.minus(robotPose.getTranslation());
-            Rotation2d aimAngle = new Rotation2d(Math.atan2(
-                toTarget.getY(),
-                toTarget.getX()
-            ));
-            Rotation2d currentAngle = robotPose.getRotation().plus(Rotation2d.k180deg);
-            Rotation2d neededTurn = aimAngle.minus(currentAngle);
-            double degrees = -neededTurn.getDegrees();
-
-            // ignore anything crazy
-            if( (degrees < -90) || (degrees > 90))
-                newValue = 0;
-            else
-            {
-                newValue = degrees/20.0;
-                if( newValue > 0.2 ) newValue = 0.2;
-                else if( newValue < -0.2 ) newValue = -0.2;
-            }
-
-            return newValue;
-        }
-        else if ((newValue <= 0.08) && (newValue >= -0.08))
+        if ((newValue <= 0.08) && (newValue >= -0.08))
         {
             return 0.0;
         }
@@ -307,12 +293,6 @@ public class RobotContainer {
         m_Vision.limelightSlow( disabled );
     }
 
-    private void AutoAimSet( boolean newval )
-    {
-        System.out.println("AutoAimSet: " + newval);
-        autoAimPressed = newval;
-    }
-
     private void BumpSpeedSet( boolean newval, boolean byOperator )
     {
         if( byOperator )
@@ -362,10 +342,6 @@ public class RobotContainer {
             )                    
         );
 
-        joystick.leftBumper()
-            .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
-            .onFalse( Commands.runOnce( ()->AutoAimSet(false) ) ) ;
-            
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         final var idle = new SwerveRequest.Idle();
@@ -426,8 +402,7 @@ public class RobotContainer {
             .onTrue( Commands.runOnce( ()->SlowModeSet(true) ) )
             .onFalse( Commands.runOnce( ()->SlowModeSet(false)) ) ;
         joystick.axisGreaterThan(3, 0.5)
-            .onTrue( Commands.runOnce( ()->AutoAimSet(true) ) )
-            .onFalse( Commands.runOnce( ()->AutoAimSet(false)) ) ;
+            .whileTrue( AutoAim() );
 
 
 
@@ -535,8 +510,47 @@ public class RobotContainer {
     {
         m_Intake.setRollerPercentOutput(0);
         m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown);
-        AutoAimSet(false); 
         CommandScheduler.getInstance().schedule( ShooterStop() );
+    }
+
+    private Rotation2d autoAimAngle;
+    double autoAimDegrees;
+
+    private double AutoAimCalculate()
+    {
+        double newValue;
+        Pose2d robotPose = drivetrain.getState().Pose;
+        Translation2d toTarget = hubPosition.minus(robotPose.getTranslation());
+        autoAimAngle = new Rotation2d(Math.atan2(
+            toTarget.getY(),
+            toTarget.getX()
+        ));
+        Rotation2d currentAngle = robotPose.getRotation().plus(Rotation2d.k180deg);
+        Rotation2d neededTurn = autoAimAngle.minus(currentAngle);
+        autoAimDegrees = -neededTurn.getDegrees();
+
+        // ignore anything crazy
+        if( (autoAimDegrees < -90) || (autoAimDegrees > 90))
+            newValue = 0;
+        else
+        {
+            newValue = autoAimDegrees/20.0;
+            if( newValue > 0.2 ) newValue = 0.2;
+            else if( newValue < -0.2 ) newValue = -0.2;
+        }
+        newValue = newValue * MaxAngularRate;
+        return newValue;
+    }
+
+    private boolean AutoAimDone()
+    {
+        boolean retval;
+
+        if( autoAimDegrees < 3.0 )
+            retval = true;
+        else
+            retval = false;
+        return retval;
     }
 
     private Rotation2d getPossumAngle()
