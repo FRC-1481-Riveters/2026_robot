@@ -146,12 +146,7 @@ public class RobotContainer {
                 .withVelocityY( -deadBandLeftX() * MaxSpeed )  // Drive left/right
                 .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
         )
-        .until( this::AutoAimDone )
-        .withTimeout( 2.0 )
-        .andThen( drivetrain.applyRequest(() ->
-            drive.withVelocityX(0) // Drive forward/backward
-                .withVelocityY(0)  // Drive left/right
-                .withRotationalRate( 0 ) ) );
+        .until( this::AutoAimDone );
     }
 
     private Command ShooterStop()
@@ -410,7 +405,7 @@ public class RobotContainer {
             .onTrue( Commands.runOnce( ()->SlowModeSet(true) ) )
             .onFalse( Commands.runOnce( ()->SlowModeSet(false)) ) ;
         joystick.axisGreaterThan(3, 0.5)
-            .whileTrue( AutoAim() );
+            .whileTrue( Commands.repeatingSequence( AutoAim() ) );
 
 
 
