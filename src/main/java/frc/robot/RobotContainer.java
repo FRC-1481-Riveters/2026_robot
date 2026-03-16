@@ -6,6 +6,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.littletonrobotics.junction.Logger;
@@ -31,14 +32,21 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.util.HubShiftUtil;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.HubCounter;
 
 
 
@@ -57,6 +65,8 @@ public class RobotContainer {
     private final VisionSubsystem m_Vision = new VisionSubsystem(drivetrain);
     private final Intake m_Intake = new Intake();
     private final Shooter m_Shooter = new Shooter();
+    private HubCounter hubCounter = new HubCounter();
+
     private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("/Tuning/ShooterSpeed", Constants.Shooter.shootSpeed);
     private LoggedNetworkNumber kickerSpeed = new LoggedNetworkNumber("/Tuning/KickerSpeed", Constants.Shooter.kickerSpeed);
     private LoggedNetworkNumber conveyorSpeed = new LoggedNetworkNumber("/Tuning/ConveyorSpeed", Constants.Shooter.conveyorSpeed);
@@ -81,6 +91,8 @@ public class RobotContainer {
     private Rotation2d autoAimAngle;
     private double autoAimDegrees = 999.0;
 
+    private final Alert autoWinnerNotSet = new Alert("!!! AUTO WINNER NOT SET !!!", AlertType.kError);
+
 
     public RobotContainer() {
         setupNamedCommands();
@@ -93,6 +105,11 @@ public class RobotContainer {
             PortForwarder.add(port, "limelight-right.local", port);
             PortForwarder.add(port, "10.14.81.13", port);
         }
+
+        HubShiftUtil.setAllianceWinOverride(
+        () -> {
+          return Optional.empty();
+        });
 
         autoChooser = AutoBuilder.buildAutoChooser("Nothing");
         SmartDashboard.putData("Auto Mode", autoChooser);
@@ -501,6 +518,64 @@ public class RobotContainer {
         operatorJoystick.rightBumper()
             .onTrue( Commands.runOnce( ()->PickupSpeedSet( true, true ) ) )
             .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, true )) );
+
+        // ****** ALERTS ******
+        // ****** ALERTS ******
+        // ****** ALERTS ******
+        // ****** ALERTS ******
+
+        // Warn formissing game data
+        Timer teleopElapsedTimer = new Timer();
+        RobotModeTriggers.teleop()
+            .onTrue(
+                Commands.runOnce(
+                    () -> {
+                        teleopElapsedTimer.restart();
+                    }));
+        RobotModeTriggers.teleop()
+            .and(() -> !(DriverStation.getGameSpecificMessage().length() > 0))
+            .and(() -> HubShiftUtil.getAllianceWinOverride().isEmpty())
+            .and(() -> teleopElapsedTimer.hasElapsed(1.0))
+            .whileTrue(
+                Commands.runEnd(
+                    () -> {
+                        joystick.setRumble(RumbleType.kBothRumble, 1);
+                        operatorJoystick.setRumble(RumbleType.kBothRumble, 1);
+                    },
+                    () -> {
+                        joystick.setRumble(RumbleType.kBothRumble, 0);
+                        operatorJoystick.setRumble(RumbleType.kBothRumble, 0);
+                    }))
+            .whileTrue(
+                Commands.startEnd(
+                    () -> {
+                        autoWinnerNotSet.set(true);
+                    },
+                    () -> {
+                        autoWinnerNotSet.set(false);
+                    }));
+
+        // End-of-shift warning
+        for (int i = 1; i <= 5; i++) 
+        {
+            double time = i;
+            Trigger shiftAboutToEnd =
+                new Trigger(() -> (HubShiftUtil.getShiftedShiftInfo().remainingTime() < time));
+            shiftAboutToEnd
+                .and(RobotModeTriggers.teleop())
+                .onTrue(
+                    Commands.runEnd(
+                            () -> joystick.setRumble(RumbleType.kRightRumble, 1.0),
+                            () -> joystick.setRumble(RumbleType.kBothRumble, 0.0))
+                        .withTimeout(0.25));
+        }
+        
+        // Reset hub shift timer when enabling
+        RobotModeTriggers.teleop().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(HubShiftUtil::initialize));
+        RobotModeTriggers.disabled()
+            .onTrue(Commands.runOnce(HubShiftUtil::initialize).ignoringDisable(true));
+        RobotModeTriggers.autonomous().onTrue(Commands.runOnce(hubCounter::initialize));
     }
 
     public void setShooter( double speed, double angle )
@@ -602,5 +677,19 @@ public class RobotContainer {
     private Rotation2d getPossumAngle()
     {
         return Rotation2d.k180deg;
+    }
+
+    public void updateDashboardOutputs()
+    {
+        // Update from HubShiftUtil
+        SmartDashboard.putString(
+            "Shifts/Remaining Shift Time",
+            String.format("%.1f", Math.max(HubShiftUtil.getShiftedShiftInfo().remainingTime(), 0.0)));
+        SmartDashboard.putBoolean("Shifts/Shift Active", HubShiftUtil.getShiftedShiftInfo().active());
+        SmartDashboard.putString(
+            "Shifts/Game State", HubShiftUtil.getShiftedShiftInfo().currentShift().toString());
+        SmartDashboard.putBoolean(
+            "Shifts/Active First?",
+            DriverStation.getAlliance().orElse(Alliance.Blue) == HubShiftUtil.getFirstActiveAlliance());
     }
 }

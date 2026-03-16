@@ -77,6 +77,8 @@ public class Robot extends LoggedRobot {
     public void robotPeriodic() {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run(); 
+        // Update RobotContainer dashboard outputs
+        m_robotContainer.updateDashboardOutputs();
     }
 
     @Override
