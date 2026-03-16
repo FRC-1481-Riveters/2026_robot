@@ -109,7 +109,7 @@ public class Shooter extends SubsystemBase {
         else
         {
             ++debounceCounter;
-            if( debounceCounter > (1500/50) )
+            if( debounceCounter > (1500/50) )       // 1.5 seconds / 50 updates per second
             {
                 shooterSpeedSteady = true;
             }
