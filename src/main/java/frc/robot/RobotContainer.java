@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -78,6 +79,9 @@ public class RobotContainer {
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
     
+    private final SwerveRequest.RobotCentric driveRobotCentric = new SwerveRequest.RobotCentric()
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+
 
     private final CommandXboxController joystick = new CommandXboxController(0);
     private final CommandXboxController operatorJoystick = new CommandXboxController(1);
@@ -209,6 +213,67 @@ public class RobotContainer {
         .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
         .andThen(Commands.waitSeconds(0.25))
         .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ) );
+    }
+
+    public Command TestMode()
+    {
+        return Commands.runOnce( ()->System.out.println("===================== Tests Starting ====================="))
+            .andThen( TestIntake() )
+            .andThen( TestDrivetrain() )
+            .andThen( Commands.runOnce( ()->System.out.println("===================== Tests Complete ====================="))
+        );
+    }
+
+    private Command TestIntake()
+    {
+        return Commands.runOnce( ()->System.out.println("Testing Intake...") )
+            .andThen( Commands.runOnce( ()->m_Intake.testDownSwitch(false) ) );        
+    }
+
+    private Command TestDrivetrain()
+    {
+        return Commands.runOnce( ()->System.out.println("Testing swerve...") )
+            // TEST +X
+            .andThen( Commands.runOnce( ()->drivetrain.TestStartPoseCapture() ))
+            .andThen
+            ( 
+                drivetrain.applyRequest
+                (
+                    () -> driveRobotCentric.withVelocityX(0.4).withVelocityY(0)
+                ).withTimeout(1.0)
+            )
+            .andThen( Commands.runOnce( ()->drivetrain.TestPose(0.1, 0) ) )
+
+            // TEST +Y
+            .andThen( Commands.runOnce( ()->drivetrain.TestStartPoseCapture() ))
+            .andThen( 
+                drivetrain.applyRequest
+                (
+                    () -> driveRobotCentric.withVelocityX(0.0).withVelocityY(0.4)
+                ).withTimeout(1.0)
+            )
+            .andThen( Commands.runOnce( ()->drivetrain.TestPose(0.0, 0.1) ) )
+
+            // TEST -Y
+            .andThen( Commands.runOnce( ()->drivetrain.TestStartPoseCapture() ))
+            .andThen( 
+                drivetrain.applyRequest
+                (
+                    () -> driveRobotCentric.withVelocityX(0.0).withVelocityY(-0.4)
+                ).withTimeout(1.0)
+            )
+            .andThen( Commands.runOnce( ()->drivetrain.TestPose(0.0, -0.1) ) )
+
+            // TEST -X
+            .andThen( Commands.runOnce( ()->drivetrain.TestStartPoseCapture() ))
+            .andThen( 
+                drivetrain.applyRequest
+                (
+                    () -> driveRobotCentric.withVelocityX(-0.4).withVelocityY(0)
+                ).withTimeout(1.0)
+            )
+            .andThen( Commands.runOnce( ()->drivetrain.TestPose(-0.1, 0) ) )
+        ;
     }
 
     private double deadBandLeftX() {
@@ -385,7 +450,12 @@ public class RobotContainer {
         }
     }
 
-    private void configureBindings() {
+    private void configureBindings() 
+    {
+        joystick.setRumble(RumbleType.kRightRumble, 0.0);
+        joystick.setRumble(RumbleType.kBothRumble, 0.0);
+        operatorJoystick.setRumble(RumbleType.kBothRumble, 0.0);
+
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
@@ -536,16 +606,16 @@ public class RobotContainer {
             .and(() -> !(DriverStation.getGameSpecificMessage().length() > 0))
             .and(() -> HubShiftUtil.getAllianceWinOverride().isEmpty())
             .and(() -> teleopElapsedTimer.hasElapsed(1.0))
-            .whileTrue(
-                Commands.runEnd(
-                    () -> {
-                        joystick.setRumble(RumbleType.kBothRumble, 1);
-                        operatorJoystick.setRumble(RumbleType.kBothRumble, 1);
-                    },
-                    () -> {
-                        joystick.setRumble(RumbleType.kBothRumble, 0);
-                        operatorJoystick.setRumble(RumbleType.kBothRumble, 0);
-                    }))
+//            .whileTrue(
+//                Commands.runEnd(
+//                    () -> {
+//                        joystick.setRumble(RumbleType.kBothRumble, 1);
+//                        operatorJoystick.setRumble(RumbleType.kBothRumble, 1);
+//                    },
+//                    () -> {
+//                        joystick.setRumble(RumbleType.kBothRumble, 0);
+//                        operatorJoystick.setRumble(RumbleType.kBothRumble, 0);
+//                    }))
             .whileTrue(
                 Commands.startEnd(
                     () -> {
@@ -556,7 +626,7 @@ public class RobotContainer {
                     }));
 
         // End-of-shift warning
-        for (int i = 1; i <= 5; i++) 
+        for (int i = 1; i <= 0; i++) //TODO FIXME
         {
             double time = i;
             Trigger shiftAboutToEnd =

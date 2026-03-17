@@ -20,6 +20,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -386,5 +387,37 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Alliance getAlliance()
     {
         return m_allianceColor;
+    }
+
+    private Pose2d testPoseStart;
+    public void TestStartPoseCapture()
+    {
+        testPoseStart = this.getState().Pose;
+    }
+    public void TestPose( double x, double y )
+    {
+        Pose2d testPoseEnd = this.getState().Pose;
+
+        double diffX, diffY;
+
+        diffX = testPoseEnd.getX() - testPoseStart.getX();
+        diffY = testPoseEnd.getY() - testPoseStart.getY();
+
+        if( (x > 0.01) && (diffX > x) )
+        {
+            System.out.println("Swerve PASS: +x movement good");
+        }
+        if( (y > 0.01) && (diffY > y) )
+        {
+            System.out.println("Swerve PASS: +y movement good");
+        }
+        if( (x < -0.01) && (diffX < x) )
+        {
+            System.out.println("Swerve PASS: -x movement good");
+        }
+        if( (y < -0.01) && (diffY < y) )
+        {
+            System.out.println("Swerve PASS: -y movement good");
+        }
     }
 }
