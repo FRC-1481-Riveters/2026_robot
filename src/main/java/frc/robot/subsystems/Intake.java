@@ -180,11 +180,12 @@ public class Intake extends SubsystemBase {
     }
 
     boolean upDownLimitPrevious = true;
+    boolean upDownLimit = false;
 
     @Override
     public void periodic() {
 
-        boolean upDownLimit = upDownLimitSwitch.get();
+        upDownLimit = upDownLimitSwitch.get();
         if( upDownLimit == false && (upDownLimit != upDownLimitPrevious) )
         {
             upDownMotor.setPosition(Constants.Intake.upDownPositionDown);
@@ -203,5 +204,15 @@ public class Intake extends SubsystemBase {
         super.periodic();
     }
 
-    
+    public void testDownSwitch( boolean expectedValue )
+    {
+        if( upDownLimit != expectedValue )
+        {
+            System.out.println(" testDownSwitch FAIL: expected " + expectedValue + ", got " + upDownLimit);
+        }
+        else
+        {
+            System.out.println(" testDownSwitch PASS: expected " + expectedValue + ", got " + upDownLimit);
+        }
+    }    
 }
