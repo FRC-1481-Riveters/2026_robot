@@ -606,16 +606,16 @@ public class RobotContainer {
             .and(() -> !(DriverStation.getGameSpecificMessage().length() > 0))
             .and(() -> HubShiftUtil.getAllianceWinOverride().isEmpty())
             .and(() -> teleopElapsedTimer.hasElapsed(1.0))
-//            .whileTrue(
-//                Commands.runEnd(
-//                    () -> {
-//                        joystick.setRumble(RumbleType.kBothRumble, 1);
-//                        operatorJoystick.setRumble(RumbleType.kBothRumble, 1);
-//                    },
-//                    () -> {
-//                        joystick.setRumble(RumbleType.kBothRumble, 0);
-//                        operatorJoystick.setRumble(RumbleType.kBothRumble, 0);
-//                    }))
+ //           .whileTrue(
+ //               Commands.runEnd(
+ //                  () -> {
+ //                     joystick.setRumble(RumbleType.kBothRumble, 1);
+ //                       operatorJoystick.setRumble(RumbleType.kBothRumble, 1);
+ //                  },
+ //                 () -> {
+ //                      joystick.setRumble(RumbleType.kBothRumble, 0);
+ //                       operatorJoystick.setRumble(RumbleType.kBothRumble, 0);
+ //                   }))
             .whileTrue(
                 Commands.startEnd(
                     () -> {
@@ -626,7 +626,7 @@ public class RobotContainer {
                     }));
 
         // End-of-shift warning
-        for (int i = 1; i <= 0; i++) //TODO FIXME
+        for (int i = 1; i <= 5; i++) //TODO FIXME
         {
             double time = i;
             Trigger shiftAboutToEnd =
