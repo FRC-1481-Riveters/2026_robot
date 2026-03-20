@@ -13,8 +13,6 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.PointWheelsAt;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -30,11 +28,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -68,7 +64,6 @@ public class RobotContainer {
     private final Shooter m_Shooter = new Shooter();
     private HubCounter hubCounter = new HubCounter();
 
-    private LoggedNetworkNumber shooterSpeed = new LoggedNetworkNumber("/Tuning/ShooterSpeed", Constants.Shooter.shootSpeed);
     private LoggedNetworkNumber kickerSpeed = new LoggedNetworkNumber("/Tuning/KickerSpeed", Constants.Shooter.kickerSpeed);
     private LoggedNetworkNumber conveyorSpeed = new LoggedNetworkNumber("/Tuning/ConveyorSpeed", Constants.Shooter.conveyorSpeed);
 
@@ -704,9 +699,8 @@ public class RobotContainer {
         m_Shooter.setShooterRPM(shootingSpeed);
     }
 
-    public Command getAutonomousCommand() {
-        // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
+    public Command getAutonomousCommand() 
+    {
         Command command;
         command = autoChooser.getSelected();
         String name = command.getName();
@@ -791,11 +785,6 @@ public class RobotContainer {
     private void AutoAimClear()
     {
         bAutoAimDone = false;
-    }
-
-    private Rotation2d getPossumAngle()
-    {
-        return Rotation2d.k180deg;
     }
 
     public void updateDashboardOutputs()

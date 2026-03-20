@@ -4,12 +4,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.LimelightHelpers.*;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 
 
@@ -25,7 +21,6 @@ public class VisionSubsystem extends SubsystemBase {
     tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);    
 
     var driveState = m_commandSwerveDrivetrain.getState();
-    double omegaRps = Units.radiansToRotations(driveState.Speeds.omegaRadiansPerSecond);
 
     double headingDegrees = driveState.Pose.getRotation().getDegrees();
     LimelightHelpers.SetRobotOrientation("limelight-back", headingDegrees, 0, 0, 0, 0, 0);

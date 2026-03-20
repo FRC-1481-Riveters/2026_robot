@@ -5,21 +5,58 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Outpost Depot pt1"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Outpost Depot pt1"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeLower"
+                }
+              }
+            ]
           }
         },
         {
           "type": "wait",
           "data": {
-            "waitTime": 5.0
+            "waitTime": 4.0
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "Outpost Depot pt2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RollerStop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoShooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAim"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot"
           }
         }
       ]
