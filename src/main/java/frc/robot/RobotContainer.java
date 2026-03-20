@@ -98,11 +98,9 @@ public class RobotContainer {
         configureBindings();
         for (int port = 5800; port <= 5809; port++) {
             PortForwarder.add(port, "10.14.81.11", port);
+//            PortForwarder.add(port, "10.14.81.12", port); // limelight-left
+//            PortForwarder.add(port, "10.14.81.13", port); // limelight-right
         }
-//        PortForwarder.add(5811, "limelight-left.local", 5801);
-//        PortForwarder.add(5812, "10.14.81.12", 5802);
-//        PortForwarder.add(5821, "limelight-right.local", 5801);
-//        PortForwarder.add(5822, "10.14.81.13", 5802);
 
         HubShiftUtil.setAllianceWinOverride(
         () -> {
