@@ -252,4 +252,35 @@ public RawFiducial getFiducialWithId(int id, boolean verbose) {
   public double getClosestTA(){
     return getClosestFiducial().ta;
   }
+
+  private boolean left17, right17, back17;
+
+  public void testClear()
+  {
+      System.out.println("Test Vision: hold tag at least 4 feet away from left, right, and back Limelights");
+      left17 = false;
+      right17 = false;
+      back17 = false;
+  }
+
+  public boolean all17()
+  {
+    if( LimelightHelpers.getTA("limelight-back") > 0.1 && (back17 == false))
+    {
+      back17 = true;
+      System.out.println("Back camera: AprilTag detected");
+    }
+    if( LimelightHelpers.getTA("limelight-left") > 0.1 && (left17 == false))
+    {
+      left17 = true;
+      System.out.println("Left camera: AprilTag detected");
+    }
+    if( LimelightHelpers.getTA("limelight-right") > 0.1 && (right17 == false))
+    {
+      right17 = true;
+      System.out.println("Right camera: AprilTag detected");
+    }
+
+    return( back17 && left17 && right17 );
+  }
 }

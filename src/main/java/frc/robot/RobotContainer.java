@@ -101,14 +101,13 @@ public class RobotContainer {
     public RobotContainer() {
         setupNamedCommands();
         configureBindings();
-        for (int port = 5801; port <= 5809; port++) {
-            PortForwarder.add(port, "limelight-back.local", port);
+        for (int port = 5800; port <= 5809; port++) {
             PortForwarder.add(port, "10.14.81.11", port);
-            PortForwarder.add(port, "limelight-left.local", port);
-            PortForwarder.add(port, "10.14.81.12", port);
-            PortForwarder.add(port, "limelight-right.local", port);
-            PortForwarder.add(port, "10.14.81.13", port);
         }
+//        PortForwarder.add(5811, "limelight-left.local", 5801);
+//        PortForwarder.add(5812, "10.14.81.12", 5802);
+//        PortForwarder.add(5821, "limelight-right.local", 5801);
+//        PortForwarder.add(5822, "10.14.81.13", 5802);
 
         HubShiftUtil.setAllianceWinOverride(
         () -> {
@@ -136,9 +135,8 @@ public class RobotContainer {
     {
         return 
             Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake )
-                .andThen( Commands.waitSeconds(0.5))
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5) ) )
-                .andThen( Commands.waitSeconds(1.5))
+                .andThen( Commands.waitSeconds(2.0))
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) )
                 .andThen( Commands.waitSeconds(0.5));
     }
@@ -218,8 +216,10 @@ public class RobotContainer {
     public Command TestMode()
     {
         return Commands.runOnce( ()->System.out.println("===================== Tests Starting ====================="))
+            .andThen( TestShooter() )
             .andThen( TestIntake() )
             .andThen( TestDrivetrain() )
+            .andThen( TestVision() )
             .andThen( Commands.runOnce( ()->System.out.println("===================== Tests Complete ====================="))
         );
     }
@@ -227,7 +227,39 @@ public class RobotContainer {
     private Command TestIntake()
     {
         return Commands.runOnce( ()->System.out.println("Testing Intake...") )
-            .andThen( Commands.runOnce( ()->m_Intake.testDownSwitch(false) ) );        
+
+            .andThen( Commands.runOnce( ()->m_Intake.testDownSwitch(true) ) )
+            .andThen( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.15) )
+            .andThen( Commands.waitSeconds( 3.0 ))
+            .andThen( Commands.runOnce( ()->m_Intake.testDownSwitch(false) ) )
+            .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPositionUp ) ) )
+
+            .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.25)))
+            .andThen( Commands.waitSeconds( 1.0))
+            .andThen( Commands.runOnce( ()->m_Intake.testRollers() ) )
+            .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0)))
+
+            .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(-Constants.Intake.rollersPercentMax * 0.25)))
+            .andThen( Commands.waitSeconds( 1.0))
+            .andThen( Commands.runOnce( ()->m_Intake.testConveyor() ) )
+            .andThen( Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0)))
+        );
+}
+
+    private Command TestShooter()
+    {
+        return Commands.runOnce( ()->System.out.println("Testing Shooter...") )
+         .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(-500)) )
+            .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(-500) ) ) 
+            .andThen( Commands.waitSeconds( 2.0))
+            .andThen( Commands.runOnce( ()->m_Shooter.testShooter() ) )
+            .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
+            .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )  
+            .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionMin)))
+            .andThen( Commands.waitSeconds( 2.0))
+            .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionMax)))
+            .andThen( Commands.waitSeconds( 2.0))
+       );
     }
 
     private Command TestDrivetrain()
@@ -273,8 +305,25 @@ public class RobotContainer {
                 ).withTimeout(1.0)
             )
             .andThen( Commands.runOnce( ()->drivetrain.TestPose(-0.1, 0) ) )
+
+            // STOP
+            .andThen
+            ( 
+                drivetrain.applyRequest
+                (
+                    () -> driveRobotCentric.withVelocityX(0.0).withVelocityY(0)
+                ).withTimeout(0.1)
+            )
         ;
     }
+
+    private Command TestVision()
+    {
+        return Commands.runOnce( ()->System.out.println("Testing Vision...") )
+            .andThen( Commands.runOnce( ()->m_Vision.testClear() ) )
+            .andThen( Commands.waitUntil( m_Vision::all17 )
+        );
+}
 
     private double deadBandLeftX() {
         double newValue = joystick.getLeftX();

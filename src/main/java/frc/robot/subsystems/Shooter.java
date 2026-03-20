@@ -257,4 +257,47 @@ public class Shooter extends SubsystemBase {
     {
         return shooterSpeedSteady;
     }
+
+        
+    
+    public void testShooter()
+    {
+        double velocity; 
+
+        velocity = kickerMotor.getVelocity().getValueAsDouble();
+        if( Math.abs( velocity ) < 5 )
+        {
+            System.out.println(" testShooter kicker FAIL: expected 5, got " + velocity);
+        } 
+        else
+        {
+            System.out.println(" testShooter kicker PASS: expected 5, got " + velocity );
+        }
+        
+
+        velocity = leftShooterMotor.getVelocity().getValueAsDouble();
+        if( Math.abs( velocity ) < 5 )
+        {
+            System.out.println(" testShooter left Shooter FAIL: expected 5, got " + velocity);
+        }
+        else
+        {
+            System.out.println(" testShooter left Shooter PASS: expected 5, got " + velocity );
+        }
+
+          velocity = rightShooterMotor.getVelocity().getValueAsDouble();
+        if( Math.abs( velocity ) < 5 )
+        {
+            System.out.println(" testShooter right Shooter FAIL: expected 5, got " + velocity);
+        }
+        else
+        {
+            System.out.println(" testShooter right Shooter PASS: expected 5, got " + velocity );
+        }
+
+
+
+
+    }    
+
 }

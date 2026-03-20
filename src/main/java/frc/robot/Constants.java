@@ -54,9 +54,9 @@ public final class Constants {
   public static final class Shooter
   {
     public static final double shootSpeedPointBlank = 1600; // 30" from HUB highest angle
-    public static final double shootSpeedTowerFront = 1750; // TOWER FRONT lowest angle
+    public static final double shootSpeedTowerFront = 1780; // TOWER FRONT lowest angle
     public static final double shootSpeedTrench = 1900;     // TRENCH lowest angle
-    public static final double shootSpeedTowerBack = 2100;
+    public static final double shootSpeedTowerBack = 2150;
     public static final double shootSpeedCorner = 2530;     // CORNER lowest angle
 
     public static final double shooterAnglePositionMax = -0.6;   // lowest possible shooting angle (longest shot)

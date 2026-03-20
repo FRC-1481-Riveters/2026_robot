@@ -215,4 +215,45 @@ public class Intake extends SubsystemBase {
             System.out.println(" testDownSwitch PASS: expected " + expectedValue + ", got " + upDownLimit);
         }
     }    
+
+    public void testRollers()
+    {
+        double velocity; 
+
+        velocity = rollerInnerMotor.getVelocity().getValueAsDouble();
+        if( Math.abs( velocity ) < 5 )
+        {
+            System.out.println(" testRollers inner FAIL: expected 5, got " + velocity);
+        }
+        else
+        {
+            System.out.println(" testRollers inner PASS: expected 5, got " + velocity );
+        }
+
+         velocity = rollerOuterMotor.getVelocity().getValueAsDouble();
+        if( Math.abs( velocity ) < 5 )
+        {
+            System.out.println(" testRollers outer FAIL: expected 5, got " + velocity);
+        }
+        else
+        {
+            System.out.println(" testRollers outer PASS: expected 5, got " + velocity );
+        }
+    }    
+
+    public void testConveyor()
+    {
+        double velocity; 
+
+        velocity = conveyorMotor.getVelocity().getValueAsDouble();
+        if( Math.abs( velocity ) < 5 )
+        {
+            System.out.println(" testConveyor FAIL: expected 5, got " + velocity);
+        }
+        else
+        {
+            System.out.println(" testConveyor PASS: expected 5, got " + velocity );
+        }
+
+    }    
 }
