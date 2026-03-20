@@ -11,9 +11,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "over bump to lemons"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeLower"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "over bump to lemons"
+                }
+              }
+            ]
           }
         },
         {
@@ -29,6 +42,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "ShootShortSpinup"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "back over bump"
@@ -38,6 +57,24 @@
           "type": "path",
           "data": {
             "pathName": "over bump to shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RollerStop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAim"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoShooter"
           }
         }
       ]
