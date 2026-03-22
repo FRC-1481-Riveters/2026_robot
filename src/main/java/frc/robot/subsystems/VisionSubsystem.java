@@ -4,9 +4,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.LimelightHelpers.*;
 
+import java.util.Optional;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 
 public class VisionSubsystem extends SubsystemBase {
@@ -64,10 +68,8 @@ public class VisionSubsystem extends SubsystemBase {
         0,
         -90
         );
-        // Configure each limelight AREA limit to: 0.1% min, 4.0% max
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
-        LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+
+
         /*
         Use the Limelight's internal IMU in addition to the swerve subsystem's Pigeon IMU
         see:
@@ -79,6 +81,33 @@ public class VisionSubsystem extends SubsystemBase {
         LimelightHelpers.SetIMUMode("limelight-right", 0 );
     }
 
+    public void LimelightPipelines()
+    {
+
+              Optional<Alliance> allianceColor = DriverStation.getAlliance();
+        if( allianceColor.get() == Alliance.Blue )
+        {
+          //make sure to change depending on match number, this is blue(matches 22,42,48,and 67)
+          // Configure each limelight AREA limit to: 0.1% min, 4.0% max
+        LimelightHelpers.setPipelineIndex("limelight-back",0);
+        LimelightHelpers.setPipelineIndex("limelight-left",0);
+        LimelightHelpers.setPipelineIndex("limelight-right",0);
+        //  LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32}); 
+        //  LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+        //  LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
+        }
+        else
+        {
+          //this is red (matches 18, 26,37,56,61, and 73)
+          // Configure each limelight AREA limit to: 0.1% min, 4.0% max
+        LimelightHelpers.setPipelineIndex("limelight-back",1);
+        LimelightHelpers.setPipelineIndex("limelight-left",1);
+        LimelightHelpers.setPipelineIndex("limelight-right",1);
+//          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});
+//          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});
+//          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});          
+        }
+    }
   @Override
   public void periodic() {
       fiducials = LimelightHelpers.getRawFiducials("limelight-back");
@@ -102,20 +131,23 @@ public class VisionSubsystem extends SubsystemBase {
       -- set QUALITY THRESHOLD to 2
       -- enable FULL 3D TARGETING
       */
-      LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-back");
-      if( mt2 != null )
-      {
-        if(mt2.tagCount != 0)
-        {
-//          Logger.recordOutput("Vision/PoseBack", mt2.pose );
-          m_commandSwerveDrivetrain.updateOdometry(mt2.pose, true, mt2.timestampSeconds);
-        }
-      }
 
       // Ignore side Limelights if we are going over the BUMP
       double roll = m_commandSwerveDrivetrain.getPigeon2().getRoll().getValueAsDouble();
-      if( Math.abs(roll) < 3.0 )
+      double pitch = m_commandSwerveDrivetrain.getPigeon2().getPitch().getValueAsDouble();
+
+      if( Math.abs(roll) < 3.0 && Math.abs(pitch) < 3.0 )
       {
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-back");
+        if( mt2 != null )
+        {
+          if(mt2.tagCount != 0)
+          {
+  //          Logger.recordOutput("Vision/PoseBack", mt2.pose );
+            m_commandSwerveDrivetrain.updateOdometry(mt2.pose, true, mt2.timestampSeconds);
+          }
+        }
+
         LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
         if( mtCamLeft != null )
         {
@@ -136,6 +168,7 @@ public class VisionSubsystem extends SubsystemBase {
           }
         }
       }
+
 
   }
 

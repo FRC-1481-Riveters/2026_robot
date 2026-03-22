@@ -98,8 +98,8 @@ public class RobotContainer {
         configureBindings();
         for (int port = 5800; port <= 5809; port++) {
             PortForwarder.add(port, "10.14.81.11", port);
-//            PortForwarder.add(port, "10.14.81.12", port); // limelight-left
-//            PortForwarder.add(port, "10.14.81.13", port); // limelight-right
+        //    PortForwarder.add(port, "10.14.81.12", port); // limelight-left
+        //    PortForwarder.add(port, "10.14.81.13", port); // limelight-right
         }
 
         HubShiftUtil.setAllianceWinOverride(
@@ -166,6 +166,8 @@ public class RobotContainer {
 
     private Command AutoAimAuton()
     {
+        return Commands.runOnce( ()->System.out.println( "AutoAimAuton disabled"));
+        /*
         return Commands.runOnce( ()->AutoAimClear() )
             .andThen( drivetrain.applyRequest(() ->
                 drive.withVelocityX( 0 ) // Drive forward/backward
@@ -181,18 +183,20 @@ public class RobotContainer {
             )
             .withTimeout( 0.05 )
         );
+        */
     }
 
     private Command AutoAim()
     {
+        return Commands.runOnce( ()->System.out.println( "AutoAimAuton disabled"));
+        /*
         return Commands.runOnce( ()->AutoAimClear() )
             .andThen( drivetrain.applyRequest(() ->
                 drive.withVelocityX( -deadBandLeftY() * MaxSpeed ) // Drive forward/backward
                     .withVelocityY( -deadBandLeftX() * MaxSpeed )  // Drive left/right
                     .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
-            ) 
-        )
-        .until( this::AutoAimDone );
+            ));
+        */
     }
 
     private Command ShooterStop()
@@ -371,11 +375,12 @@ public class RobotContainer {
         - a real way would be to build an array of distance+angle+position and interpolate between
         - but here we'll just do it the hard way with if-thens so it's easy to understand
         */
-        if( distance < distance_30inch )
+//        if( distance < distance_30inch )
         {
             angle = Constants.Shooter.shooterAnglePositionMin;
             speed = Constants.Shooter.shootSpeedPointBlank;
         }
+        /*
         else if( distance < distance_tower_front )
         {
             percent = (distance - distance_30inch) / (distance_tower_front - distance_30inch);
@@ -419,6 +424,7 @@ public class RobotContainer {
             speed = Constants.Shooter.shootSpeedCorner;
         }
         System.out.println("autoShooterRPM: distance=" + distance + " percent=" + percent + " angle=" + angle + " speed=" + speed);
+        */
         setShooter( speed, angle );
     }
 
@@ -727,6 +733,7 @@ public class RobotContainer {
         {
             hubPosition = new Translation2d(4.61, 4.02);
         }
+        m_Vision.LimelightPipelines();
 
     }
 
