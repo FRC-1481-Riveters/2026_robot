@@ -5,9 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Into center"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Into center"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeLower"
+                }
+              }
+            ]
           }
         },
         {
@@ -18,12 +31,6 @@
                 "type": "path",
                 "data": {
                   "pathName": "Intake center"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "IntakeLower"
                 }
               }
             ]

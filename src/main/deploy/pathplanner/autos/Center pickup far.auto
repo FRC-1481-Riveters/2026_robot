@@ -5,15 +5,22 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Into center"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "IntakeLower"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Into center"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeLower"
+                }
+              }
+            ]
           }
         },
         {
@@ -32,6 +39,24 @@
           "type": "path",
           "data": {
             "pathName": "Center to hub far"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RollerStop"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoShooter"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoAim"
           }
         },
         {

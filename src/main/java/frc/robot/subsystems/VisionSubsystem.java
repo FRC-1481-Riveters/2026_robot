@@ -6,17 +6,26 @@ import frc.robot.subsystems.LimelightHelpers.*;
 
 import java.util.Optional;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 
 public class VisionSubsystem extends SubsystemBase {
   private RawFiducial[] fiducials;
   private CommandSwerveDrivetrain m_commandSwerveDrivetrain;
   private AprilTagFieldLayout tagLayout;
+  private final Field2d m_fieldBack = new Field2d();
+  private final Field2d m_fieldLeft = new Field2d();
+  private final Field2d m_fieldRight = new Field2d();
+
 
 
   public VisionSubsystem(CommandSwerveDrivetrain commandSwerveDrivetrain) {
@@ -30,6 +39,11 @@ public class VisionSubsystem extends SubsystemBase {
     LimelightHelpers.SetRobotOrientation("limelight-back", headingDegrees, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-left", headingDegrees, 0, 0, 0, 0, 0);
     LimelightHelpers.SetRobotOrientation("limelight-right", headingDegrees, 0, 0, 0, 0, 0);
+
+    // Do this in either robot or subsystem init
+    SmartDashboard.putData("FieldBack", m_fieldBack);
+    SmartDashboard.putData("FieldLeft", m_fieldLeft);
+    SmartDashboard.putData("FieldRight", m_fieldRight);
   }
 
   public static class NoSuchTargetException extends RuntimeException {
@@ -108,6 +122,10 @@ public class VisionSubsystem extends SubsystemBase {
 //          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});          
         }
     }
+
+
+  public Pose2d poseBack, poseLeft, poseRight;
+
   @Override
   public void periodic() {
       fiducials = LimelightHelpers.getRawFiducials("limelight-back");
@@ -138,13 +156,14 @@ public class VisionSubsystem extends SubsystemBase {
 
       if( Math.abs(roll) < 3.0 && Math.abs(pitch) < 3.0 )
       {
-        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-back");
+        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-back");
         if( mt2 != null )
         {
           if(mt2.tagCount != 0)
           {
-  //          Logger.recordOutput("Vision/PoseBack", mt2.pose );
-            m_commandSwerveDrivetrain.updateOdometry(mt2.pose, true, mt2.timestampSeconds);
+            poseBack = mt2.pose;
+            m_fieldBack.setRobotPose(poseBack);
+            m_commandSwerveDrivetrain.updateOdometry(poseBack, true, mt2.timestampSeconds);
           }
         }
 
@@ -153,8 +172,9 @@ public class VisionSubsystem extends SubsystemBase {
         {
           if(mtCamLeft.tagCount != 0)
           {
-  //            Logger.recordOutput("Vision/PoseLeft", mtCamLeft.pose );
-            m_commandSwerveDrivetrain.updateOdometry(mtCamLeft.pose, true, mtCamLeft.timestampSeconds);
+            poseLeft = mtCamLeft.pose;
+            m_fieldLeft.setRobotPose(poseLeft);
+//            m_commandSwerveDrivetrain.updateOdometry(poseLeft, true, mtCamLeft.timestampSeconds);
           }
         }
 
@@ -163,12 +183,12 @@ public class VisionSubsystem extends SubsystemBase {
         {
           if(mtCamRight.tagCount != 0)
           {
-  //            Logger.recordOutput("Vision/PoseRight", mtCamRight.pose );
-            m_commandSwerveDrivetrain.updateOdometry(mtCamRight.pose, true, mtCamRight.timestampSeconds);
+            poseRight = mtCamRight.pose;
+            m_fieldRight.setRobotPose(poseRight);
+//            m_commandSwerveDrivetrain.updateOdometry(poseRight, true, mtCamRight.timestampSeconds);
           }
         }
       }
-
 
   }
 

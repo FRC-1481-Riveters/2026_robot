@@ -5,22 +5,9 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "Outpost Depot pt1"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "IntakeLower"
-                }
-              }
-            ]
+            "pathName": "Outpost Depot pt1"
           }
         },
         {
@@ -30,9 +17,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Outpost Depot pt2"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Outpost Depot pt2"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IntakeLower"
+                }
+              }
+            ]
           }
         },
         {
@@ -57,6 +57,12 @@
           "type": "named",
           "data": {
             "name": "Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ShootShortSpinup"
           }
         }
       ]

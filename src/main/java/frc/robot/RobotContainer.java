@@ -22,8 +22,11 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.net.PortForwarder;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -128,8 +131,9 @@ public class RobotContainer {
     {
         return 
             Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake )
-                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5) ) )
-                .andThen( Commands.waitSeconds(2.0))
+                .andThen( Commands.waitSeconds(1.0))
+               // .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5) ) )
+               // .andThen( Commands.waitSeconds(2.0))
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) )
                 .andThen( Commands.waitSeconds(0.5));
     }
@@ -166,8 +170,6 @@ public class RobotContainer {
 
     private Command AutoAimAuton()
     {
-        return Commands.runOnce( ()->System.out.println( "AutoAimAuton disabled"));
-        /*
         return Commands.runOnce( ()->AutoAimClear() )
             .andThen( drivetrain.applyRequest(() ->
                 drive.withVelocityX( 0 ) // Drive forward/backward
@@ -183,20 +185,16 @@ public class RobotContainer {
             )
             .withTimeout( 0.05 )
         );
-        */
     }
 
     private Command AutoAim()
     {
-        return Commands.runOnce( ()->System.out.println( "AutoAimAuton disabled"));
-        /*
         return Commands.runOnce( ()->AutoAimClear() )
             .andThen( drivetrain.applyRequest(() ->
                 drive.withVelocityX( -deadBandLeftY() * MaxSpeed ) // Drive forward/backward
                     .withVelocityY( -deadBandLeftX() * MaxSpeed )  // Drive left/right
                     .withRotationalRate( AutoAimCalculate() ) // Positive = counterclockwise
             ));
-        */
     }
 
     private Command ShooterStop()
@@ -207,7 +205,7 @@ public class RobotContainer {
         .andThen(Commands.waitSeconds(0.25))
         .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
         .andThen(Commands.waitSeconds(0.25))
-        .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) ) );
+        .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) ) );
     }
 
     public Command TestMode()
@@ -251,7 +249,7 @@ public class RobotContainer {
             .andThen( Commands.waitSeconds( 2.0))
             .andThen( Commands.runOnce( ()->m_Shooter.testShooter() ) )
             .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
-            .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )  
+            .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) )  
             .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionMin)))
             .andThen( Commands.waitSeconds( 2.0))
             .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionMax)))
@@ -375,12 +373,11 @@ public class RobotContainer {
         - a real way would be to build an array of distance+angle+position and interpolate between
         - but here we'll just do it the hard way with if-thens so it's easy to understand
         */
-//        if( distance < distance_30inch )
+        if( distance < distance_30inch )
         {
             angle = Constants.Shooter.shooterAnglePositionMin;
             speed = Constants.Shooter.shootSpeedPointBlank;
         }
-        /*
         else if( distance < distance_tower_front )
         {
             percent = (distance - distance_30inch) / (distance_tower_front - distance_30inch);
@@ -424,7 +421,7 @@ public class RobotContainer {
             speed = Constants.Shooter.shootSpeedCorner;
         }
         System.out.println("autoShooterRPM: distance=" + distance + " percent=" + percent + " angle=" + angle + " speed=" + speed);
-        */
+
         setShooter( speed, angle );
     }
 
@@ -490,7 +487,7 @@ public class RobotContainer {
     {
         if( newval ){
             MaxSpeed = 1.0;
-            MaxAngularRate = RotationsPerSecond.of(0.15).in(RadiansPerSecond);
+            MaxAngularRate = RotationsPerSecond.of(0.30).in(RadiansPerSecond);
         }
         else{
             MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -545,7 +542,7 @@ public class RobotContainer {
             .onFalse(
                 Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
                 .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
-                .andThen(Commands.runOnce( ()->m_Shooter.setShooterRPM(0) )
+                .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) )
             )
         );
 
@@ -603,7 +600,7 @@ public class RobotContainer {
             .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTowerFront, Constants.Shooter.shooterAnglePositionTower )));
 
         operatorJoystick.b()
-            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedCorner, Constants.Shooter.shooterAnglePositionMax )));
+            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTrench, Constants.Shooter.shooterAnglePositionTower)));
 
         operatorJoystick.axisGreaterThan(1, 0.2)
             .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0.5) ) )
