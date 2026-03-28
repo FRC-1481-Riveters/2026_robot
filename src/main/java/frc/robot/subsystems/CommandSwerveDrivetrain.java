@@ -364,8 +364,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //   scale the vision x and y standard deviation by distance from the tag.
 
         xyStds  = 5.000;     // default: Limelight pose is not particularly trustworthy
-//        radStds = 999999;    // don't trust Limelight rotation
-        radStds = 5;    // trust Limelight rotation
+        radStds = 999999;    // don't trust Limelight rotation
+//        radStds = 5;    // trust Limelight rotation
 
         if( pose.getX() != 0 && pose.getY() != 0 )
         {

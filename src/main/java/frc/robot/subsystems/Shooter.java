@@ -75,11 +75,11 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
-        Logger.recordOutput("Shooter/ShooterLeftSpeed", leftShooterMotor.getVelocity().getValue() );
-        Logger.recordOutput("Shooter/ShooterRightSpeed", rightShooterMotor.getVelocity().getValue() );
+        Logger.recordOutput("Shooter/ShooterLeftSpeed", leftShooterMotor.getVelocity().getValueAsDouble() * 60.0 );
+        Logger.recordOutput("Shooter/ShooterRightSpeed", rightShooterMotor.getVelocity().getValueAsDouble() * 60.0 );
 //        Logger.recordOutput("Shooter/ShooterRightCurrent", rightShooterMotor.getTorqueCurrent().getValueAsDouble() );
 //        Logger.recordOutput("Shooter/ShooterLeftCurrent", leftShooterMotor.getTorqueCurrent().getValueAsDouble() );
-        Logger.recordOutput("Shooter/KickerSpeed", kickerMotor.getVelocity().getValue() );
+        Logger.recordOutput("Shooter/KickerSpeed", kickerMotor.getVelocity().getValueAsDouble() * 60.0 );
 //        Logger.recordOutput("Shooter/KickerCurrent", kickerMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Shooter/AnglePosition", angleMotor.getPosition().getValue() );
 //        Logger.recordOutput("Shooter/AngleCurrent", angleMotor.getTorqueCurrent().getValueAsDouble() );
@@ -102,7 +102,7 @@ public class Shooter extends SubsystemBase {
         else
         {
             ++debounceCounter;
-            if( debounceCounter > (1500/50) )       // 1.5 seconds / 50 updates per second
+            if( debounceCounter > (2000/50) )       // 2.0 seconds / 50 updates per second
             {
                 shooterSpeedSteady = true;
             }
@@ -139,8 +139,8 @@ public class Shooter extends SubsystemBase {
             )
             .withSlot0(
                 new Slot0Configs()
-                    .withKP(0.5)
-                    .withKI(2)
+                    .withKP(0.5) //0.5)
+                    .withKI(2.0) //2.0)
                     .withKD(0)
                     .withKV(12.0 / RPM.of(6000).in(RotationsPerSecond)) // 12 volts when requesting max RPS
             );
@@ -183,10 +183,10 @@ public class Shooter extends SubsystemBase {
 
         motor.getConfigurator().apply(config);
 
-        double angleEncoderPosition = angleCancoder.getPosition().getValueAsDouble();
+        double angleEncoderPosition = angleCancoder.getAbsolutePosition().getValueAsDouble();
         angleCancoder.setPosition( angleEncoderPosition );
         // CANcoder bottom=0, top=0.72
-        // motor position bottom=0, top=-17.2
+        // motor position bottom=0 (far shot), top=-17.2 (shortest shot)
         double angleMotorPosition = angleEncoderPosition * (-17.2 / 0.72);
         angleMotor.setPosition( angleMotorPosition );
     }
@@ -227,7 +227,7 @@ public class Shooter extends SubsystemBase {
     {
         final PositionVoltage m_request = new PositionVoltage(0).withSlot(0);
         angleMotor.setControl(m_request.withPosition(position));
-        Logger.recordOutput("Shooter/AngleOutput", position );
+        Logger.recordOutput("Shooter/AngleSetPoint", position );
     }
 
     public void setAnglePercentOutput(double percentOutput) {
@@ -238,6 +238,7 @@ public class Shooter extends SubsystemBase {
                 .withOutput(Volts.of(volts))
         );
         Logger.recordOutput("Shooter/AngleOutput", volts );
+        Logger.recordOutput("Shooter/AngleSetPoint", 0.0 );
     }
 
     public void stop() {

@@ -57,19 +57,19 @@ public class Robot extends LoggedRobot {
         // Start AdvantageKit logger
         Logger.start();
 
-    // Adjust loop overrun warning timeout
-    try {
-      Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
-      watchdogField.setAccessible(true);
-      Watchdog watchdog = (Watchdog) watchdogField.get(this);
-      watchdog.setTimeout(Constants.loopPeriodWatchdogSecs);
-    } catch (Exception e) {
-      DriverStation.reportWarning("Failed to disable loop overrun warnings.", false);
-    }
-    CommandScheduler.getInstance().setPeriod(Constants.loopPeriodWatchdogSecs);
+        // Adjust loop overrun warning timeout
+        try {
+        Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
+        watchdogField.setAccessible(true);
+        Watchdog watchdog = (Watchdog) watchdogField.get(this);
+        watchdog.setTimeout(Constants.loopPeriodWatchdogSecs);
+        } catch (Exception e) {
+        DriverStation.reportWarning("Failed to disable loop overrun warnings.", false);
+        }
+        CommandScheduler.getInstance().setPeriod(Constants.loopPeriodWatchdogSecs);
 
-    m_robotContainer = new RobotContainer();
-        CameraServer.startAutomaticCapture();
+        m_robotContainer = new RobotContainer();
+        //CameraServer.startAutomaticCapture();
     }
 
     @Override

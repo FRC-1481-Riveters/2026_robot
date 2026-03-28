@@ -11,6 +11,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -126,6 +127,8 @@ public class VisionSubsystem extends SubsystemBase {
 
   public Pose2d poseBack, poseLeft, poseRight;
 
+  private int pcount=0;
+
   @Override
   public void periodic() {
       fiducials = LimelightHelpers.getRawFiducials("limelight-back");
@@ -159,33 +162,42 @@ public class VisionSubsystem extends SubsystemBase {
         LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-back");
         if( mt2 != null )
         {
-          if(mt2.tagCount != 0)
+          if(mt2.tagCount >= 2)
           {
             poseBack = mt2.pose;
-            m_fieldBack.setRobotPose(poseBack);
             m_commandSwerveDrivetrain.updateOdometry(poseBack, true, mt2.timestampSeconds);
+
+            // just a hack for visualization - seems like Field2d is bugged, because Glass shows degrees instead of radians
+            Rotation2d hack = new Rotation2d(poseBack.getRotation().getRadians() / (360.0 / (2.0 * Math.PI)));            
+            m_fieldBack.setRobotPose(poseBack.getX(), poseBack.getY(), hack);
           }
         }
 
         LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
         if( mtCamLeft != null )
         {
-          if(mtCamLeft.tagCount != 0)
-          {
+          if(mtCamLeft.tagCount >= 2)
+          {            
             poseLeft = mtCamLeft.pose;
-            m_fieldLeft.setRobotPose(poseLeft);
-//            m_commandSwerveDrivetrain.updateOdometry(poseLeft, true, mtCamLeft.timestampSeconds);
+            m_commandSwerveDrivetrain.updateOdometry(poseLeft, true, mtCamLeft.timestampSeconds);
+
+            // just a hack for visualization - seems like Field2d is bugged, because Glass shows degrees instead of radians
+            Rotation2d hack = new Rotation2d(poseLeft.getRotation().getRadians() / (360.0 / (2.0 * Math.PI)));            
+            m_fieldLeft.setRobotPose(poseLeft.getX(), poseLeft.getY(), hack);  
           }
         }
 
         LimelightHelpers.PoseEstimate mtCamRight = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
         if( mtCamRight != null )
         {
-          if(mtCamRight.tagCount != 0)
+          if(mtCamRight.tagCount >= 2)
           {
-            poseRight = mtCamRight.pose;
-            m_fieldRight.setRobotPose(poseRight);
-//            m_commandSwerveDrivetrain.updateOdometry(poseRight, true, mtCamRight.timestampSeconds);
+           poseRight = mtCamRight.pose;
+            m_commandSwerveDrivetrain.updateOdometry(poseRight, true, mtCamRight.timestampSeconds);
+
+            // just a hack for visualization - seems like Field2d is bugged, because Glass shows degrees instead of radians
+            Rotation2d hack = new Rotation2d(poseRight.getRotation().getRadians() / (360.0 / (2.0 * Math.PI)));            
+            m_fieldRight.setRobotPose(poseRight.getX(), poseRight.getY(), hack);
           }
         }
       }

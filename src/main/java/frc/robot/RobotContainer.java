@@ -20,6 +20,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.util.sendable.Sendable;
@@ -52,7 +53,8 @@ import frc.robot.subsystems.HubCounter;
 
 
 
-public class RobotContainer {
+public class RobotContainer 
+{
     private final SendableChooser<Command> autoChooser;
 
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -96,10 +98,12 @@ public class RobotContainer {
     private final Alert autoWinnerNotSet = new Alert("!!! AUTO WINNER NOT SET !!!", AlertType.kError);
 
 
-    public RobotContainer() {
+    public RobotContainer() 
+    {
         setupNamedCommands();
         configureBindings();
-        for (int port = 5800; port <= 5809; port++) {
+        for( int port = 5800; port <= 5809; port++ )
+        {
             PortForwarder.add(port, "10.14.81.11", port);
         //    PortForwarder.add(port, "10.14.81.12", port); // limelight-left
         //    PortForwarder.add(port, "10.14.81.13", port); // limelight-right
@@ -157,8 +161,9 @@ public class RobotContainer {
         .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(conveyorSpeed.get())) )
         .andThen(Commands.waitSeconds(1.0))
         .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax)))
-        .andThen(Commands.waitSeconds(3.5))
+        .andThen(Commands.waitSeconds(1.5))
         .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition( Constants.Intake.upDownPosition30Degrees ) ))
+        .andThen(Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0.5)) )
         .andThen(Commands.waitSeconds(10.0))
         .andThen(ShooterStop());
     }
@@ -388,31 +393,35 @@ public class RobotContainer {
                 Constants.Shooter.shootSpeedPointBlank + 
                 (percent * (Constants.Shooter.shootSpeedTowerFront - Constants.Shooter.shootSpeedPointBlank));
         }
-        else if( distance < distance_trench )
-        {
-            percent = (distance - distance_tower_front) / (distance_trench - distance_tower_front);
-            angle = Constants.Shooter.shooterAnglePositionTower;
-            speed =
-                Constants.Shooter.shootSpeedTowerFront + 
-                (percent * (Constants.Shooter.shootSpeedTrench - Constants.Shooter.shootSpeedTowerFront));
-        }
         else if( distance < distance_tower_back )
         {
-            percent = (distance - distance_trench) / (distance_tower_back - distance_trench);
-            angle = Constants.Shooter.shooterAnglePositionTower;
+            percent = (distance - distance_tower_front) / (distance_trench - distance_tower_front);
+            angle = 
+                Constants.Shooter.shooterAnglePositionTower + 
+                (percent * (Constants.Shooter.shooterAnglePositionTowerBack - Constants.Shooter.shooterAnglePositionTower));
             speed =
-                Constants.Shooter.shootSpeedTrench + 
-                (percent * (Constants.Shooter.shootSpeedTowerBack - Constants.Shooter.shootSpeedTrench));
+                Constants.Shooter.shootSpeedTowerFront + 
+                (percent * (Constants.Shooter.shootSpeedTowerBack - Constants.Shooter.shootSpeedTowerFront));
+        }
+        else if( distance < distance_trench )
+        {
+            percent = (distance - distance_trench) / (distance_tower_back - distance_trench);
+            angle = 
+                Constants.Shooter.shooterAnglePositionTowerBack + 
+                (percent * (Constants.Shooter.shooterAnglePositionMin - Constants.Shooter.shooterAnglePositionTowerBack));
+            speed =
+                Constants.Shooter.shootSpeedTowerBack + 
+                (percent * (Constants.Shooter.shootSpeedTrench - Constants.Shooter.shootSpeedTowerBack));
         }
         else if( distance < distance_corner )
         {
             percent = (distance - distance_tower_back) / (distance_corner - distance_tower_back);
             angle = 
-                Constants.Shooter.shooterAnglePositionTower + 
-                (percent * (Constants.Shooter.shooterAnglePositionMax - Constants.Shooter.shooterAnglePositionTower));
+                Constants.Shooter.shooterAnglePositionTowerBack + 
+                (percent * (Constants.Shooter.shooterAnglePositionMax - Constants.Shooter.shooterAnglePositionTowerBack));
             speed =
                 Constants.Shooter.shootSpeedTrench + 
-                (percent * (Constants.Shooter.shootSpeedCorner - Constants.Shooter.shootSpeedTowerBack));
+                (percent * (Constants.Shooter.shootSpeedCorner - Constants.Shooter.shootSpeedTrench));
         }
         else
         {
@@ -745,12 +754,17 @@ public class RobotContainer {
     {
         double newValue;
         Pose2d robotPose = drivetrain.getState().Pose;
-        Translation2d toTarget = hubPosition.minus(robotPose.getTranslation());
+        // center of shooter relative to center of robot:
+        // - 4" backward from center = 0.102 meters
+        // - 2.5" right of center = 0.0635 meters
+        Transform2d shooterOffset = new Transform2d( 0.102, 0.0635, Rotation2d.kZero);
+        Pose2d shooterPose = robotPose.plus(shooterOffset);
+        Translation2d toTarget = hubPosition.minus(shooterPose.getTranslation());
         autoAimAngle = new Rotation2d(Math.atan2(
             toTarget.getY(),
             toTarget.getX()
         ));
-        Rotation2d currentAngle = robotPose.getRotation().plus(Rotation2d.k180deg);
+        Rotation2d currentAngle = shooterPose.getRotation().plus(Rotation2d.k180deg);
         Rotation2d neededTurn = autoAimAngle.minus(currentAngle);
         autoAimDegrees = neededTurn.getDegrees();
 
