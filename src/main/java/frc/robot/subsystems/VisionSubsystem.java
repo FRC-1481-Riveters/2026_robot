@@ -55,7 +55,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void config() {
 
-    // LimelightHelpers.setCropWindow("limelight-back", -0.5, 0.5, -0.5, 0.5);
+    /* 
     LimelightHelpers.setCameraPose_RobotSpace(
         "limelight-back",
         -0.305,
@@ -83,7 +83,7 @@ public class VisionSubsystem extends SubsystemBase {
         0,
         -90
         );
-
+      */
 
         /*
         Use the Limelight's internal IMU in addition to the swerve subsystem's Pigeon IMU
@@ -99,7 +99,7 @@ public class VisionSubsystem extends SubsystemBase {
     public void LimelightPipelines()
     {
 
-              Optional<Alliance> allianceColor = DriverStation.getAlliance();
+        Optional<Alliance> allianceColor = DriverStation.getAlliance();
         if( allianceColor.get() == Alliance.Blue )
         {
           //make sure to change depending on match number, this is blue(matches 22,42,48,and 67)
