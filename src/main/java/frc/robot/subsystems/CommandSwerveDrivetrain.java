@@ -7,6 +7,9 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -29,7 +32,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -408,6 +411,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if( (y < -0.01) && (diffY < y) )
         {
             System.out.println("Swerve PASS: -y movement good");
+        }
+    }
+
+    public void PossumConfig( boolean possumEnable )
+    {
+        if( possumEnable == true )
+        {
+            this.getModule(0).getDriveMotor().setNeutralMode(NeutralModeValue.Coast);
+            this.getModule(1).getDriveMotor().setNeutralMode(NeutralModeValue.Coast);
+            this.getModule(2).getDriveMotor().setNeutralMode(NeutralModeValue.Coast);
+            this.getModule(3).getDriveMotor().setNeutralMode(NeutralModeValue.Coast);
+        }
+        else
+        {
+            this.getModule(0).getDriveMotor().setNeutralMode(NeutralModeValue.Brake);
+            this.getModule(1).getDriveMotor().setNeutralMode(NeutralModeValue.Brake);
+            this.getModule(2).getDriveMotor().setNeutralMode(NeutralModeValue.Brake);
+            this.getModule(3).getDriveMotor().setNeutralMode(NeutralModeValue.Brake);
         }
     }
 }

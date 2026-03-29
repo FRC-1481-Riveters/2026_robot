@@ -567,6 +567,16 @@ public class RobotContainer
         // Reset the field-centric heading on BACK button (below/left of controller power)
         joystick.back().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
+        joystick.rightBumper()
+            .onTrue( Commands.runOnce( ()->drivetrain.PossumConfig( true ) ) )
+            .whileTrue( 
+                drivetrain.applyRequest(
+                    ()->point
+                    .withModuleDirection( PossumAngle() )
+                )
+             )
+             .onFalse( Commands.runOnce( ()->drivetrain.PossumConfig( false ) ) );
+
         // Make an X out of the swerve wheels
         joystick.x()
             .whileTrue(drivetrain.applyRequest(() -> brake));
@@ -574,9 +584,9 @@ public class RobotContainer
         joystick.leftBumper()
             .onTrue( Commands.runOnce( ()->BumpSpeedSet( true, false ) ) )
             .onFalse( Commands.runOnce( ()->BumpSpeedSet( false, false )) );
-        joystick.rightBumper()
-            .onTrue( Commands.runOnce( ()->PickupSpeedSet( true, false ) ) )
-            .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, false )) );
+//        joystick.rightBumper()
+//            .onTrue( Commands.runOnce( ()->PickupSpeedSet( true, false ) ) )
+//            .onFalse( Commands.runOnce( ()->PickupSpeedSet( false, false )) );
         joystick.axisGreaterThan(2, 0.5)
             .onTrue( Commands.runOnce( ()->SlowModeSet(true) ) )
             .onFalse( Commands.runOnce( ()->SlowModeSet(false)) ) ;
@@ -801,6 +811,12 @@ public class RobotContainer
     private void AutoAimClear()
     {
         bAutoAimDone = false;
+    }
+
+    private Rotation2d PossumAngle()
+    {
+        AutoAimCalculate();
+        return autoAimAngle.plus( Rotation2d.kCW_90deg );
     }
 
     public void updateDashboardOutputs()
