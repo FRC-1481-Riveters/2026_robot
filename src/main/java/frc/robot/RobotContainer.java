@@ -52,7 +52,6 @@ import frc.robot.subsystems.HubCounter;
 
 
 
-
 public class RobotContainer 
 {
     private final SendableChooser<Command> autoChooser;
@@ -114,7 +113,7 @@ public class RobotContainer
           return Optional.empty();
         });
 
-        autoChooser = AutoBuilder.buildAutoChooser("Nothing");
+        autoChooser = AutoBuilder.buildAutoChooser("OneFoot");
         SmartDashboard.putData("Auto Mode", autoChooser);
 
         drivetrain.registerTelemetry(logger::telemeterize);
@@ -569,12 +568,12 @@ public class RobotContainer
 
         joystick.rightBumper()
             .onTrue( Commands.runOnce( ()->drivetrain.PossumConfig( true ) ) )
-            .whileTrue( 
-                drivetrain.applyRequest(
-                    ()->point
-                    .withModuleDirection( PossumAngle() )
-                )
-             )
+//            .whileTrue( 
+//                drivetrain.applyRequest(
+//                    ()->point
+//                    .withModuleDirection( PossumAngle() )
+//                )
+//             )
              .onFalse( Commands.runOnce( ()->drivetrain.PossumConfig( false ) ) );
 
         // Make an X out of the swerve wheels
@@ -813,10 +812,24 @@ public class RobotContainer
         bAutoAimDone = false;
     }
 
+    private int printSkip=0;
     private Rotation2d PossumAngle()
     {
+        Rotation2d possumAngle;
+
+        //drivetrain.getState().Speeds.vyMetersPerSecond (left=positive, right=negative)
         AutoAimCalculate();
-        return autoAimAngle.plus( Rotation2d.kCW_90deg );
+        possumAngle = autoAimAngle.plus( Rotation2d.kCW_90deg );
+        if( printSkip == 0 )
+        {
+            System.out.println( "autoAimAngle=" + autoAimAngle.getDegrees() + "   possumAngle=" + possumAngle.getDegrees());
+            printSkip = 20;
+        }
+        else
+        {
+            --printSkip;
+        }
+        return possumAngle;
     }
 
     public void updateDashboardOutputs()
