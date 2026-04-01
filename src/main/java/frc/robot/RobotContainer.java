@@ -362,8 +362,8 @@ public class RobotContainer
     {
         Pose2d robotPose = drivetrain.getState().Pose;
         double distance = robotPose.getTranslation().getDistance(hubPosition);
-        double angle;
-        double speed;
+        double angle=0;
+        double speed=0;
         double percent=0;
 
         double distance_30inch = 1.76;      // distance between robot center and hub with 30 inches between bumpers and hub base
@@ -372,61 +372,53 @@ public class RobotContainer
         double distance_tower_back = 3.94;  // distance to hub when back of the robot is at the alliance wall next to the tower
         double distance_corner = 5.25;      // distance to hub when back of the robot is in either alliance corner
 
-        /*
-        Interpolate between these positions the hard way
-        - a real way would be to build an array of distance+angle+position and interpolate between
-        - but here we'll just do it the hard way with if-thens so it's easy to understand
-        */
-        if( distance < distance_30inch )
+        // The distances must be arranged in ascending order in this structure
+        double[][] shooting_parms = 
+        { 
+            { distance_30inch,      Constants.Shooter.shootSpeedPointBlank, Constants.Shooter.shooterAnglePositionMin },
+            { distance_tower_front, Constants.Shooter.shootSpeedTowerFront, Constants.Shooter.shooterAnglePositionTower },
+            { distance_trench,      Constants.Shooter.shootSpeedTrench,     Constants.Shooter.shooterAnglePositionTowerBack },
+            { distance_tower_back,  Constants.Shooter.shootSpeedTowerBack,  Constants.Shooter.shooterAnglePositionTowerBack },
+            { distance_corner,      Constants.Shooter.shootSpeedCorner,     Constants.Shooter.shooterAnglePositionTowerBack }
+        };
+
+        if( distance <= shooting_parms[0][0] )
         {
-            angle = Constants.Shooter.shooterAnglePositionMin;
-            speed = Constants.Shooter.shootSpeedPointBlank;
+            speed = shooting_parms[0][1];
+            angle = shooting_parms[0][2];
+            percent = 0;
         }
-        else if( distance < distance_tower_front )
+        else if( distance >= shooting_parms[4][0] )
         {
-            percent = (distance - distance_30inch) / (distance_tower_front - distance_30inch);
-            angle = 
-                Constants.Shooter.shooterAnglePositionMin + 
-                (percent * (Constants.Shooter.shooterAnglePositionTower - Constants.Shooter.shooterAnglePositionMin));
-            speed =
-                Constants.Shooter.shootSpeedPointBlank + 
-                (percent * (Constants.Shooter.shootSpeedTowerFront - Constants.Shooter.shootSpeedPointBlank));
-        }
-        else if( distance < distance_tower_back )
-        {
-            percent = (distance - distance_tower_front) / (distance_trench - distance_tower_front);
-            angle = 
-                Constants.Shooter.shooterAnglePositionTower + 
-                (percent * (Constants.Shooter.shooterAnglePositionTowerBack - Constants.Shooter.shooterAnglePositionTower));
-            speed =
-                Constants.Shooter.shootSpeedTowerFront + 
-                (percent * (Constants.Shooter.shootSpeedTowerBack - Constants.Shooter.shootSpeedTowerFront));
-        }
-        else if( distance < distance_trench )
-        {
-            percent = (distance - distance_trench) / (distance_tower_back - distance_trench);
-            angle = 
-                Constants.Shooter.shooterAnglePositionTowerBack + 
-                (percent * (Constants.Shooter.shooterAnglePositionMin - Constants.Shooter.shooterAnglePositionTowerBack));
-            speed =
-                Constants.Shooter.shootSpeedTowerBack + 
-                (percent * (Constants.Shooter.shootSpeedTrench - Constants.Shooter.shootSpeedTowerBack));
-        }
-        else if( distance < distance_corner )
-        {
-            percent = (distance - distance_tower_back) / (distance_corner - distance_tower_back);
-            angle = 
-                Constants.Shooter.shooterAnglePositionTowerBack + 
-                (percent * (Constants.Shooter.shooterAnglePositionMax - Constants.Shooter.shooterAnglePositionTowerBack));
-            speed =
-                Constants.Shooter.shootSpeedTrench + 
-                (percent * (Constants.Shooter.shootSpeedCorner - Constants.Shooter.shootSpeedTrench));
+            speed = shooting_parms[4][1];
+            angle = shooting_parms[4][2];
+            percent = 0;
         }
         else
         {
-            // bigger
-            angle = Constants.Shooter.shooterAnglePositionMax;
-            speed = Constants.Shooter.shootSpeedCorner;
+            // Interpolate speed and angle based on the shooting_parms table
+            for( int i=1; i<5; i++ )
+            {
+                if( distance < shooting_parms[i][0] )
+                {
+                    // Calculate the difference between the robot and the previous distance in the table
+                    double distance_previous = (distance - shooting_parms[i-1][0]);
+
+                    // Calculate the difference between the previous distance and the next distance in the table
+                    double distance_table = shooting_parms[i][0] - shooting_parms[i-1][0];
+
+                    // Calculate a percentage based on the robot distance and the difference between the nearest table distances
+                    percent = distance_previous / distance_table;
+
+                    // Interpolate the speed
+                    speed = shooting_parms[i-1][1] + (percent * (shooting_parms[i][1] - shooting_parms[i-1][1] ) );
+
+                    // Interpolate the angle
+                    angle = shooting_parms[i-1][2] + (percent * (shooting_parms[i][2] - shooting_parms[i-1][2] ) );
+
+                    break;
+                }
+            }
         }
         System.out.println("autoShooterRPM: distance=" + distance + " percent=" + percent + " angle=" + angle + " speed=" + speed);
 
@@ -773,7 +765,7 @@ public class RobotContainer
             toTarget.getY(),
             toTarget.getX()
         ));
-        Rotation2d currentAngle = shooterPose.getRotation().plus(Rotation2d.k180deg);
+        Rotation2d currentAngle = shooterPose.getRotation().plus(Rotation2d.k180deg).plus(Rotation2d.fromDegrees(4));
         Rotation2d neededTurn = autoAimAngle.minus(currentAngle);
         autoAimDegrees = neededTurn.getDegrees();
 
