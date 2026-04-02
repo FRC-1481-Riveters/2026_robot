@@ -758,14 +758,15 @@ public class RobotContainer
         // center of shooter relative to center of robot:
         // - 4" backward from center = 0.102 meters
         // - 2.5" right of center = 0.0635 meters
-        Transform2d shooterOffset = new Transform2d( 0.102, 0.0635, Rotation2d.kZero);
+//        Transform2d shooterOffset = new Transform2d( 0.102, 0.0635, Rotation2d.kZero);
+        Transform2d shooterOffset = new Transform2d( 0.0, 0.0, Rotation2d.kZero);
         Pose2d shooterPose = robotPose.plus(shooterOffset);
         Translation2d toTarget = hubPosition.minus(shooterPose.getTranslation());
         autoAimAngle = new Rotation2d(Math.atan2(
             toTarget.getY(),
             toTarget.getX()
         ));
-        Rotation2d currentAngle = shooterPose.getRotation().plus(Rotation2d.k180deg).plus(Rotation2d.fromDegrees(4));
+        Rotation2d currentAngle = shooterPose.getRotation().plus(Rotation2d.k180deg).plus(Rotation2d.fromDegrees(2.0));
         Rotation2d neededTurn = autoAimAngle.minus(currentAngle);
         autoAimDegrees = neededTurn.getDegrees();
 
