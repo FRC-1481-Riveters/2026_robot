@@ -105,7 +105,7 @@ public class RobotContainer
         {
             PortForwarder.add(port, "10.14.81.11", port);
         //    PortForwarder.add(port, "10.14.81.12", port); // limelight-left
-        //    PortForwarder.add(port, "10.14.81.13", port); // limelight-right
+        //  PortForwarder.add(port, "10.14.81.13", port); // limelight-right
         }
 
         HubShiftUtil.setAllianceWinOverride(
@@ -133,12 +133,19 @@ public class RobotContainer
     private Command IntakeLower()
     {
         return 
-            Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake )
+            Commands.waitSeconds(1.0)
+                // move intake to down position
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake ) )
                 .andThen( Commands.waitSeconds(1.0))
-               // .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax * 0.5) ) )
-               // .andThen( Commands.waitSeconds(2.0))
-                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) )
-                .andThen( Commands.waitSeconds(0.5));
+                // Move intake back up to 30 degrees (in case it didn't push hopper far out enough)
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPosition10Degrees), m_Intake ) )
+                .andThen( Commands.waitSeconds(0.5))
+                // Push intake down briefly
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
+                .andThen( Commands.waitSeconds(0.5))
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0.0) ) )
+                // run intake rollers
+                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) );
     }
 
     private Command RollerStop()
@@ -256,7 +263,7 @@ public class RobotContainer
             .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) )  
             .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionMin)))
             .andThen( Commands.waitSeconds( 2.0))
-            .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionMax)))
+            .andThen(Commands.runOnce( ()->m_Shooter.setAnglePosition(Constants.Shooter.shooterAnglePositionTowerBack)))
             .andThen( Commands.waitSeconds( 2.0))
        );
     }

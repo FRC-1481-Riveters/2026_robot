@@ -24,6 +24,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 
 import frc.robot.Constants;
 
@@ -34,6 +35,9 @@ public class Intake extends SubsystemBase {
     //private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
     private final DigitalInput upDownLimitSwitch = new DigitalInput(0);
+    private final SlewRateLimiter rollerSlew = new SlewRateLimiter(5.5);
+       // 0.55 volts / 0.1 seconds = x volts / 1.0 second
+    private double rollerPercentOutput=0.0;
 
     public Intake() {
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
@@ -42,8 +46,8 @@ public class Intake extends SubsystemBase {
         conveyorMotor = new TalonFXS(Constants.CAN_motor_intake_conveyor);
 
         configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50,60);
-        configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 70, 80);
-        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 70, 80);
+        configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 65, 80);//70
+        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 65, 80);//70
         rollerOuterMotor.setControl(new Follower( rollerInnerMotor.getDeviceID(), MotorAlignmentValue.Aligned ) );
 
         upDownMotor.setPosition(0);
@@ -126,15 +130,21 @@ public class Intake extends SubsystemBase {
     
     public void setRollerPercentOutput(double percentOutput) {
         double volts;
+        double initialOutput;
+        rollerPercentOutput=percentOutput;
         System.out.println("setRollerPercentOutput " + percentOutput);
-        if( Math.abs(percentOutput) < 0.1 )
+
+        initialOutput = rollerSlew.calculate(rollerPercentOutput);
+
+
+        if( Math.abs(initialOutput) < 0.1 )
         {
             volts = 0;
         }
         else
         {
 //            percentOutput /= 2.0;   // 50% is our ideal running speed (maximum torque)
-            volts = 12 * percentOutput;
+            volts = 12 * initialOutput;
         }
 
         rollerInnerMotor.setControl(
@@ -178,12 +188,34 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
 
+        double rollerOutput;
+        double volts;
         upDownLimit = upDownLimitSwitch.get();
         if( upDownLimit == false && (upDownLimit != upDownLimitPrevious) )
         {
             upDownMotor.setPosition(Constants.Intake.upDownPositionDown);
         }
         upDownLimitPrevious = upDownLimit;
+               
+        rollerOutput = rollerSlew.calculate(rollerPercentOutput);
+
+
+        if( Math.abs(rollerOutput) < 0.1 )
+        {
+            volts = 0;
+        }
+        else
+        {
+//            percentOutput /= 2.0;   // 50% is our ideal running speed (maximum torque)
+            volts = 12 * rollerOutput;
+        }
+
+        rollerInnerMotor.setControl(
+            voltageRequest
+                .withOutput(Volts.of(volts))
+        );
+        Logger.recordOutput("Intake/RollerSetPoint", volts );
+
         Logger.recordOutput("Intake/UpDownPosition", upDownMotor.getPosition().getValueAsDouble() );
 //        Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/upDownLimitSwitch", upDownLimit );

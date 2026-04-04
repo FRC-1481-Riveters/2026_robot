@@ -74,6 +74,7 @@ public final class Constants {
   {
     public static final double upDownPositionDown = -27.6;
     public static final double upDownPosition30Degrees = -21.0;
+     public static final double upDownPosition10Degrees = -24.0;
     public static final double upDownPositionUp = 0.0;
     public static final double rollersPercentMax = 0.55;
   }
