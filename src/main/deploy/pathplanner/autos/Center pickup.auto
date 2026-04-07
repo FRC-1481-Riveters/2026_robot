@@ -57,13 +57,13 @@
         {
           "type": "named",
           "data": {
-            "name": "AutoShooter"
+            "name": "AutoAim"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "AutoAim"
+            "name": "AutoShooter"
           }
         },
         {

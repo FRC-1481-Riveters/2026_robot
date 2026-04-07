@@ -614,7 +614,7 @@ public class RobotContainer
             .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedPointBlank, Constants.Shooter.shooterAnglePositionMin )));
 
         operatorJoystick.y()
-            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTowerFront, Constants.Shooter.shooterAnglePositionTower )));
+            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTowerBack, Constants.Shooter.shooterAnglePositionTowerBack )));
 
         operatorJoystick.b()
             .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTrench, Constants.Shooter.shooterAnglePositionTower)));

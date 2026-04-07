@@ -59,10 +59,12 @@ public final class Constants {
     public static final double shootSpeedTowerBack = 2300;
     public static final double shootSpeedCorner = 2530;     // CORNER lowest angle
 
-    public static final double shooterAnglePositionMax = -0.6;   // lowest possible shooting angle (longest shot)
-    public static final double shooterAnglePositionTowerBack = -1.0; //-2.5;
-    public static final double shooterAnglePositionTower = -7.5; //-2.5;
-    public static final double shooterAnglePositionMin = -16.5;  // highest possible shooting angle (shortest shot)
+    //-8.5
+    //-25.4
+    public static final double shooterAnglePositionMax = -8.6;   // lowest possible shooting angle (longest shot)
+    public static final double shooterAnglePositionTowerBack = -9.0; //-2.5;
+    public static final double shooterAnglePositionTower = -15.5; //-2.5;
+    public static final double shooterAnglePositionMin = -24.5;  // highest possible shooting angle (shortest shot)
 
     public static final double kickPercent = 0.75;
     public static final double shootSpeed = 1600;
