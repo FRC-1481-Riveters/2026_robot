@@ -185,9 +185,9 @@ public class Shooter extends SubsystemBase {
 
         double angleEncoderPosition = angleCancoder.getAbsolutePosition().getValueAsDouble();
         angleCancoder.setPosition( angleEncoderPosition );
-        // CANcoder bottom=0, top=0.72
-        // motor position bottom=0 (far shot), top=-17.2 (shortest shot)
-        double angleMotorPosition = angleEncoderPosition * (-17.2 / 0.72);
+        // CANcoder bottom=0, top=0.8
+        // motor position bottom=0 (far shot), top=-18.1 (shortest shot)
+        double angleMotorPosition = (angleEncoderPosition / 0.8) * Constants.Shooter.shooterAnglePositionMin;
         angleMotor.setPosition( angleMotorPosition );
     }
 

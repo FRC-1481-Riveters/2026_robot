@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -26,7 +27,8 @@ public class VisionSubsystem extends SubsystemBase {
   private final Field2d m_fieldBack = new Field2d();
   private final Field2d m_fieldLeft = new Field2d();
   private final Field2d m_fieldRight = new Field2d();
-
+  private Pose2d poseBack, poseLeft, poseRight;
+  private Timer shooterCamAge = new Timer();
 
 
   public VisionSubsystem(CommandSwerveDrivetrain commandSwerveDrivetrain) {
@@ -94,40 +96,20 @@ public class VisionSubsystem extends SubsystemBase {
         LimelightHelpers.SetIMUMode("limelight-back", 0 );
         LimelightHelpers.SetIMUMode("limelight-left", 0 );
         LimelightHelpers.SetIMUMode("limelight-right", 0 );
-    }
 
+        Logger.recordOutput("Vision/shooterCamAge", 0.0 );
+        shooterCamAge.start();
+    }
+      
     public void LimelightPipelines()
-    {
-
-        Optional<Alliance> allianceColor = DriverStation.getAlliance();
-        if( allianceColor.get() == Alliance.Blue )
-        {
-          //make sure to change depending on match number, this is blue(matches 22,42,48,and 67)
-          // Configure each limelight AREA limit to: 0.1% min, 4.0% max
-        LimelightHelpers.setPipelineIndex("limelight-back",0);
-        LimelightHelpers.setPipelineIndex("limelight-left",0);
-        LimelightHelpers.setPipelineIndex("limelight-right",0);
-        //  LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32}); 
-        //  LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
-        //  LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32});
-        }
-        else
-        {
-          //this is red (matches 18, 26,37,56,61, and 73)
-          // Configure each limelight AREA limit to: 0.1% min, 4.0% max
-        LimelightHelpers.setPipelineIndex("limelight-back",1);
-        LimelightHelpers.setPipelineIndex("limelight-left",1);
-        LimelightHelpers.setPipelineIndex("limelight-right",1);
-//          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-back", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});
-//          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-left", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});
-//          LimelightHelpers.SetFiducialIDFiltersOverride("limelight-right", new int[] {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16});          
-        }
+    { 
+          
+      LimelightHelpers.setPipelineIndex("limelight-back",2);
+        LimelightHelpers.setPipelineIndex("limelight-left",2);
+        LimelightHelpers.setPipelineIndex("limelight-right",2);          
     }
+    
 
-
-  public Pose2d poseBack, poseLeft, poseRight;
-
-  private int pcount=0;
 
   @Override
   public void periodic() {
@@ -170,6 +152,7 @@ public class VisionSubsystem extends SubsystemBase {
             // just a hack for visualization - seems like Field2d is bugged, because Glass shows degrees instead of radians
             Rotation2d hack = new Rotation2d(poseBack.getRotation().getRadians() / (360.0 / (2.0 * Math.PI)));            
             m_fieldBack.setRobotPose(poseBack.getX(), poseBack.getY(), hack);
+            shooterCamAge.reset();
           }
         }
 
@@ -201,6 +184,8 @@ public class VisionSubsystem extends SubsystemBase {
           }
         }
       }
+
+      Logger.recordOutput("Vision/shooterCamAge", shooterCamAge.get() );
 
   }
 

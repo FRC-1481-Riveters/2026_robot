@@ -366,7 +366,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //   make the gyro heading standard deviation small, and 
         //   scale the vision x and y standard deviation by distance from the tag.
 
-        xyStds  = 3.000;     // default: Limelight pose is not particularly trustworthy
+        xyStds  = 0.150;     // default: Limelight pose is not particularly trustworthy
         radStds = 999999;    // don't trust Limelight rotation
 //        radStds = 5;    // trust Limelight rotation
 

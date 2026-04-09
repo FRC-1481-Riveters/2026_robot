@@ -143,7 +143,7 @@ public class RobotContainer
                 // Push intake down briefly
                 .andThen( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
                 .andThen( Commands.waitSeconds(0.5))
-                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(0.0) ) )
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake ) )
                 // run intake rollers
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) );
     }
