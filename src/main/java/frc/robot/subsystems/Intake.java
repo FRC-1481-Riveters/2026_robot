@@ -14,6 +14,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -24,7 +25,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 
 import frc.robot.Constants;
 
@@ -32,12 +32,10 @@ import frc.robot.Constants;
 public class Intake extends SubsystemBase {
 
     private final TalonFXS upDownMotor, rollerInnerMotor, rollerOuterMotor, conveyorMotor;
-    //private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
+    private final VelocityVoltage velocityRequest = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageRequest = new VoltageOut(0);
     private final DigitalInput upDownLimitSwitch = new DigitalInput(0);
-    private final SlewRateLimiter rollerSlew = new SlewRateLimiter(5.5);
        // 0.55 volts / 0.1 seconds = x volts / 1.0 second
-    private double rollerPercentOutput=0.0;
 
     public Intake() {
         upDownMotor = new TalonFXS(Constants.CAN_motor_intake_updown);
@@ -47,8 +45,8 @@ public class Intake extends SubsystemBase {
 
         configureMotor(upDownMotor, InvertedValue.CounterClockwise_Positive, 50,60);
         configureMotor(rollerInnerMotor, InvertedValue.Clockwise_Positive, 65, 80);//70
-        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 65, 80);//70
-        rollerOuterMotor.setControl(new Follower( rollerInnerMotor.getDeviceID(), MotorAlignmentValue.Aligned ) );
+        configureMotor(rollerOuterMotor, InvertedValue.Clockwise_Positive, 80, 105);//70
+        rollerInnerMotor.setControl(new Follower( rollerOuterMotor.getDeviceID(), MotorAlignmentValue.Aligned ) );
 
         upDownMotor.setPosition(0);
         configureMotor(conveyorMotor, InvertedValue.Clockwise_Positive, 50, 40);
@@ -99,10 +97,10 @@ public class Intake extends SubsystemBase {
             )
             .withSlot0(
                 new Slot0Configs()
-                    .withKP(2)
+                    .withKP(0.01)
                     .withKI(0)
                     .withKD(0)
-                    .withKV(12.0 / RPM.of(3600).in(RotationsPerSecond)) // 12 volts when requesting max RPS
+                    .withKV(12.0 / RPM.of(6300).in(RotationsPerSecond)) // 12 volts when requesting max RPS
             );
         
         motor.getConfigurator().apply(config);
@@ -130,28 +128,32 @@ public class Intake extends SubsystemBase {
     
     public void setRollerPercentOutput(double percentOutput) {
         double volts;
-        double initialOutput;
-        rollerPercentOutput=percentOutput;
         System.out.println("setRollerPercentOutput " + percentOutput);
 
-        initialOutput = rollerSlew.calculate(rollerPercentOutput);
-
-
-        if( Math.abs(initialOutput) < 0.1 )
+        if( Math.abs(percentOutput) < 0.1 )
         {
             volts = 0;
         }
         else
         {
 //            percentOutput /= 2.0;   // 50% is our ideal running speed (maximum torque)
-            volts = 12 * initialOutput;
+            volts = 12 * percentOutput;
         }
 
+        double rpm;
+        rpm = percentOutput * 6500.0;
+
+        rollerOuterMotor.setControl(
+            velocityRequest
+            .withVelocity(RPM.of(rpm))
+        );
+
+/*
         rollerInnerMotor.setControl(
             voltageRequest
                 .withOutput(Volts.of(volts))
         );
-
+*/
         Logger.recordOutput("Intake/RollerSetPoint", volts );
     }
 
@@ -188,7 +190,6 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
 
-        double rollerOutput;
         double volts;
         upDownLimit = upDownLimitSwitch.get();
         if( upDownLimit == false && (upDownLimit != upDownLimitPrevious) )
@@ -197,25 +198,6 @@ public class Intake extends SubsystemBase {
         }
         upDownLimitPrevious = upDownLimit;
                
-        rollerOutput = rollerSlew.calculate(rollerPercentOutput);
-
-
-        if( Math.abs(rollerOutput) < 0.1 )
-        {
-            volts = 0;
-        }
-        else
-        {
-//            percentOutput /= 2.0;   // 50% is our ideal running speed (maximum torque)
-            volts = 12 * rollerOutput;
-        }
-
-        rollerInnerMotor.setControl(
-            voltageRequest
-                .withOutput(Volts.of(volts))
-        );
-        Logger.recordOutput("Intake/RollerSetPoint", volts );
-
         Logger.recordOutput("Intake/UpDownPosition", upDownMotor.getPosition().getValueAsDouble() );
 //        Logger.recordOutput("Intake/UpDownCurrent", upDownMotor.getTorqueCurrent().getValueAsDouble() );
         Logger.recordOutput("Intake/upDownLimitSwitch", upDownLimit );

@@ -216,7 +216,8 @@ public class RobotContainer
         .andThen(Commands.waitSeconds(0.25))
         .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
         .andThen(Commands.waitSeconds(0.25))
-        .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) ) );
+        .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) ) )
+        .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown) ) );
     }
 
     public Command TestMode()
@@ -618,6 +619,9 @@ public class RobotContainer
 
         operatorJoystick.b()
             .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedTrench, Constants.Shooter.shooterAnglePositionTower)));
+
+        operatorJoystick.axisGreaterThan(3, 0.2)
+            .onTrue(Commands.runOnce( ()->this.setShooter( Constants.Shooter.shootSpeedPassing, Constants.Shooter.shooterAnglePositionTowerBack)));
 
         operatorJoystick.axisGreaterThan(1, 0.2)
             .onTrue( Commands.runOnce( ()->m_Shooter.setAnglePercentOutput(0.5) ) )

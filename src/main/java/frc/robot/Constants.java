@@ -58,13 +58,14 @@ public final class Constants {
     public static final double shootSpeedTrench = 2100;     // TRENCH lowest angle
     public static final double shootSpeedTowerBack = 2300;
     public static final double shootSpeedCorner = 2530;     // CORNER lowest angle
+    public static final double shootSpeedPassing = 3400;
 
     //-8.5
     //-25.4
-    public static final double shooterAnglePositionMax = 0.3;   // lowest possible shooting angle (longest shot)
-    public static final double shooterAnglePositionTowerBack = 0.3; //-2.5;
-    public static final double shooterAnglePositionTower = -7.1; //-2.5;
-    public static final double shooterAnglePositionMin = -18.1;  // highest possible shooting angle (shortest shot)
+    public static final double shooterAnglePositionMax = 0.9;   // lowest possible shooting angle (longest shot)
+    public static final double shooterAnglePositionTowerBack = 0.9; //-2.5;
+    public static final double shooterAnglePositionTower = -6.5; //-2.5;
+    public static final double shooterAnglePositionMin = -17.5;  // highest possible shooting angle (shortest shot)
 
     public static final double kickPercent = 0.75;
     public static final double shootSpeed = 1600;
@@ -78,12 +79,12 @@ public final class Constants {
     public static final double upDownPosition30Degrees = -21.0;
      public static final double upDownPosition10Degrees = -24.0;
     public static final double upDownPositionUp = 0.0;
-    public static final double rollersPercentMax = 0.55;
+    public static final double rollersPercentMax = 0.65;
   }
 
   public static final class Drive
   {
     public static final double bumpSpeed = 0.4; //0.3 was kind, 0.5 too much air
-    public static final double pickupSpeed = 0.20; 
+    public static final double pickupSpeed = 0.22; 
   }
 }
