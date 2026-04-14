@@ -123,11 +123,13 @@ public class RobotContainer
     {
         NamedCommands.registerCommand("cmdWait4", Commands.waitSeconds(4.0));
         NamedCommands.registerCommand("IntakeLower", IntakeLower());
+        NamedCommands.registerCommand("IntakeLowerDepot", IntakeLowerDepot());
         NamedCommands.registerCommand("RollerStop", RollerStop());
         NamedCommands.registerCommand("ShootShortSpinup", ShootShortSpinup());
         NamedCommands.registerCommand("Shoot", Shoot());
         NamedCommands.registerCommand("AutoAim", DeferredAutoAim());
         NamedCommands.registerCommand("AutoShooter", Commands.runOnce( ()->autoShooterRPM()) );
+        NamedCommands.registerCommand("ScoopSequence", ScoopSequence() );
     }
 
     private Command IntakeLower()
@@ -136,6 +138,23 @@ public class RobotContainer
             Commands.waitSeconds(1.0)
                 // move intake to down position
                 .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake ) )
+                .andThen( Commands.waitSeconds(1.0))
+                // Move intake back up to 30 degrees (in case it didn't push hopper far out enough)
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPosition10Degrees), m_Intake ) )
+                .andThen( Commands.waitSeconds(0.5))
+                // Push intake down briefly
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPercentOutput(-0.2) ) )
+                .andThen( Commands.waitSeconds(0.5))
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake ) )
+                // run intake rollers
+                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) );
+    }
+
+    private Command IntakeLowerDepot()
+    {
+        return 
+                // move intake to down position
+            Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake )
                 .andThen( Commands.waitSeconds(1.0))
                 // Move intake back up to 30 degrees (in case it didn't push hopper far out enough)
                 .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPosition10Degrees), m_Intake ) )
@@ -209,6 +228,18 @@ public class RobotContainer
     }
 
     private Command ShooterStop()
+    {
+        return Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
+        .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0)))
+        .andThen(Commands.runOnce( ()->AutoAimClear() ) )
+        .andThen(Commands.waitSeconds(0.25))
+        .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
+        .andThen(Commands.waitSeconds(0.25))
+        .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) ) )
+        .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown) ) );
+    }
+    
+    private Command ScoopSequence ()
     {
         return Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
         .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0)))

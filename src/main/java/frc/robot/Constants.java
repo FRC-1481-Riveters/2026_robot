@@ -24,6 +24,7 @@ public final class Constants {
   public static final int CAN_motor_intake_roller_outer = 33;
 
   public static final int CAN_motor_shooter_left = 35;
+
   public static final int CAN_motor_shooter_right = 36;
   public static final int CAN_motor_kicker = 37;
   public static final int CAN_motor_angle = 38;
@@ -54,7 +55,7 @@ public final class Constants {
   public static final class Shooter
   {
     public static final double shootSpeedPointBlank = 1800; //1600; // 30" from HUB highest angle
-    public static final double shootSpeedTowerFront = 2050; //1780; // TOWER FRONT lowest angle
+    public static final double shootSpeedTowerFront = 2100; //1780; // TOWER FRONT lowest angle
     public static final double shootSpeedTrench = 2100;     // TRENCH lowest angle
     public static final double shootSpeedTowerBack = 2300;
     public static final double shootSpeedCorner = 2530;     // CORNER lowest angle
