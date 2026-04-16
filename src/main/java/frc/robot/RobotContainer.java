@@ -130,6 +130,7 @@ public class RobotContainer
         NamedCommands.registerCommand("AutoAim", DeferredAutoAim());
         NamedCommands.registerCommand("AutoShooter", Commands.runOnce( ()->autoShooterRPM()) );
         NamedCommands.registerCommand("ScoopSequence", ScoopSequence() );
+        
     }
 
     private Command IntakeLower()
@@ -149,6 +150,19 @@ public class RobotContainer
                 // run intake rollers
                 .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) );
     }
+
+    
+    private Command IntakeScoopLower()
+    {
+        return 
+            Commands.waitSeconds(0.1)
+                // move intake to down position
+                .andThen( Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown), m_Intake ) )
+                .andThen( Commands.waitSeconds(0.7))
+                // run intake rollers
+                .andThen( Commands.runOnce( ()->m_Intake.setRollerPercentOutput(-Constants.Intake.rollersPercentMax) ) );
+    }
+
 
     private Command IntakeLowerDepot()
     {
@@ -239,16 +253,12 @@ public class RobotContainer
         .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown) ) );
     }
     
+    
     private Command ScoopSequence ()
     {
-        return Commands.runOnce( ()->m_Intake.setConveyorPercentOutput(0))
-        .andThen(Commands.runOnce( ()->m_Intake.setRollerPercentOutput(0)))
-        .andThen(Commands.runOnce( ()->AutoAimClear() ) )
-        .andThen(Commands.waitSeconds(0.25))
-        .andThen(Commands.runOnce( ()->m_Shooter.setKickerRPM(0)) )
-        .andThen(Commands.waitSeconds(0.25))
-        .andThen(Commands.runOnce( ()->m_Shooter.setPercentOutput(0) ) )
-        .andThen(Commands.runOnce( ()->m_Intake.setUpDownPosition(Constants.Intake.upDownPositionDown) ) );
+        return IntakeScoopLower()
+         .andThen(Commands.waitSeconds(4.0))
+         .andThen( ShootShortSpinup() );
     }
 
     public Command TestMode()
@@ -532,6 +542,11 @@ public class RobotContainer
             MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
             MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond);
         }
+    }
+
+    public void coast()
+    {
+            drivetrain.PossumConfig(true);
     }
 
     private void configureBindings() 

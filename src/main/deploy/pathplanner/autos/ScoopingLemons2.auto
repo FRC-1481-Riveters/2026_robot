@@ -13,14 +13,20 @@
                 "data": {
                   "pathName": "scooping lemons attempt2"
                 }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "ScoopSequence"
+                }
               }
             ]
           }
         },
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 0
+            "name": "ShootShortSpinup"
           }
         },
         {
@@ -32,25 +38,19 @@
         {
           "type": "named",
           "data": {
-            "name": "AutoShooter"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "AutoAim"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Shoot"
+            "name": "AutoShooter"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "ShootShortSpinup"
+            "name": "Shoot"
           }
         }
       ]

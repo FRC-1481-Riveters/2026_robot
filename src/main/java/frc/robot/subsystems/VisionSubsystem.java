@@ -217,7 +217,9 @@ public class VisionSubsystem extends SubsystemBase {
 
   public void limelightSlow( boolean slow )
   {
-    if( slow )
+  
+  //change before practice matches (after config)
+    if( false)//slow )
     {
       LimelightHelpers.SetThrottle("limelight-back", 100);
       LimelightHelpers.SetThrottle("limelight-left", 100);

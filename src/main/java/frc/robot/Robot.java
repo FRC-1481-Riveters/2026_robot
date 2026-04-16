@@ -83,6 +83,8 @@ public class Robot extends LoggedRobot {
     @Override
     public void disabledInit() {
         m_robotContainer.limelightSlow(true);
+    // coast mode to make the wheels easy to move, disable after config
+        //    m_robotContainer.coast();
     }
 
     @Override
