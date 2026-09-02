@@ -3,78 +3,37 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.2,
-        "y": 5.5
-      },
-      "prevControl": null,
-      "nextControl": {
-        "x": 5.821915739170325,
-        "y": 5.5
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
         "x": 5.83388888888889,
         "y": 5.523
       },
-      "prevControl": {
-        "x": 6.225691868758916,
-        "y": 5.516476462196862
-      },
+      "prevControl": null,
       "nextControl": {
-        "x": 4.94418115471133,
-        "y": 5.537813675076122
+        "x": 4.944057839068404,
+        "y": 5.523
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.505,
-        "y": 5.523
+        "x": 2.3356333333333335,
+        "y": 4.912000000000001
       },
       "prevControl": {
-        "x": 4.0117111111111114,
-        "y": 5.532744444444443
-      },
-      "nextControl": {
-        "x": 3.190205567925044,
-        "y": 5.516946260921635
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 2.0,
-        "y": 5.523
-      },
-      "prevControl": {
-        "x": 2.4476034236804565,
-        "y": 5.490599144079885
+        "x": 2.647455555555555,
+        "y": 5.184844444444443
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 1.0,
-      "rotationDegrees": 180.0
-    },
-    {
-      "waypointRelativePos": 2.0,
-      "rotationDegrees": 180.0
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 1.098759305210919,
-      "maxWaypointRelativePos": 1.8789081885856085,
+      "minWaypointRelativePos": 0.05,
+      "maxWaypointRelativePos": 0.45,
       "constraints": {
         "maxVelocity": 2.2,
         "maxAcceleration": 3.3,
@@ -89,13 +48,13 @@
   "eventMarkers": [
     {
       "name": "RollerStop",
-      "waypointRelativePos": 1.38,
+      "waypointRelativePos": 0.2,
       "endWaypointRelativePos": null,
       "command": null
     },
     {
       "name": "ShootShortSpinup",
-      "waypointRelativePos": 2.5,
+      "waypointRelativePos": 0.75,
       "endWaypointRelativePos": null,
       "command": null
     }
@@ -110,7 +69,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 147.09682431998976
+    "rotation": 153.4349488229221
   },
   "reversed": false,
   "folder": null,
