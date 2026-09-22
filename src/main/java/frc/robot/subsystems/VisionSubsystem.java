@@ -156,7 +156,7 @@ public class VisionSubsystem extends SubsystemBase {
           }
         }
 
-        LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-left");
+        LimelightHelpers.PoseEstimate mtCamLeft = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-left");
         if( mtCamLeft != null )
         {
           if(mtCamLeft.tagCount >= 2)
@@ -170,7 +170,7 @@ public class VisionSubsystem extends SubsystemBase {
           }
         }
 
-        LimelightHelpers.PoseEstimate mtCamRight = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-right");
+        LimelightHelpers.PoseEstimate mtCamRight = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight-right");
         if( mtCamRight != null )
         {
           if(mtCamRight.tagCount >= 2)
